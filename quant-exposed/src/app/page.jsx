@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FORMATS,
   bitsToArray,
@@ -11,7 +11,9 @@ import {
   composeBits,
   extract,
   bitsToHexFloat,
-  buildExplanation,
+  buildEquation,
+  valueToBits,
+  formatFiniteWith20DigitRule,
 } from "@/engine/ieee";
 
 export default function Home() {
@@ -28,7 +30,75 @@ export default function Home() {
   const rawDec = useMemo(() => bitsToRawDecimal(bits), [bits]);
   const hexFloat = useMemo(() => bitsToHexFloat(spec, bits), [spec, bits]);
 
-  const explain = useMemo(() => buildExplanation(spec, dec, value), [spec, dec, value]);
+  const explain = useMemo(() => buildEquation(spec, dec, value), [spec, dec, value]);
+
+  const [valueText, setValueText] = useState("");
+
+  useEffect(() => {
+    setValueText(
+      Number.isNaN(value)
+        ? "NaN"
+        : (Number.isFinite(value) ? formatFiniteWith20DigitRule(value) : String(value))
+    );
+  }, [spec, bits, value]);
+
+  function handleValueChange(e) {
+    setValueText(e.target.value);
+  }
+
+  function commitValue() {
+    const text = valueText;
+    const trimmed = text.trim().toLowerCase();
+    if (trimmed === "nan") {
+      setBits(valueToBits(spec, NaN));
+      return;
+    }
+    if (trimmed === "+inf" || trimmed === "inf" || trimmed === "+infinity" || trimmed === "infinity") {
+      setBits(valueToBits(spec, Infinity));
+      return;
+    }
+    if (trimmed === "-inf" || trimmed === "-infinity") {
+      setBits(valueToBits(spec, -Infinity));
+      return;
+    }
+    const parsed = Number(text);
+    if (Number.isFinite(parsed)) {
+      // check for overflow based on format's representable range
+      let sign = parsed < 0 ? -1 : 1;
+      let ax = Math.abs(parsed);
+      let maxVal = spec.maxValue;
+      let minVal = spec.minValue;
+
+      let willOverflow = (sign > 0 && ax > maxVal) || (sign < 0 && -ax < minVal);
+
+      if (willOverflow) {
+        if (spec.hasInfinity) {
+          setValueText(sign > 0 ? "Infinity" : "-Infinity");
+          setBits(valueToBits(spec, sign > 0 ? Infinity : -Infinity));
+        } else if (spec.hasNaN) {
+          setValueText("NaN");
+          setBits(valueToBits(spec, NaN));
+        } else {
+          // Clamp to maximal value for this format
+          setValueText(
+            sign > 0
+              ? (Number.isFinite(maxVal) ? formatFiniteWith20DigitRule(maxVal) : String(maxVal))
+              : (Number.isFinite(minVal) ? formatFiniteWith20DigitRule(minVal) : String(minVal))
+          );
+          setBits(valueToBits(spec, sign > 0 ? maxVal : minVal));
+        }
+      } else {
+        setBits(valueToBits(spec, parsed));
+      }
+    } else {
+      // Revert display to current computed value
+      setValueText(
+        Number.isNaN(value)
+          ? "NaN"
+          : (Number.isFinite(value) ? formatFiniteWith20DigitRule(value) : String(value))
+      );
+    }
+  }
 
   function applyDecomposed(update) {
     const next = clampDecomposed(spec, { ...dec, ...update });
@@ -76,9 +146,13 @@ export default function Home() {
 
         <section className="flex flex-col items-center">
           <div className="text-zinc-500 mb-2 text-center">Value</div>
-          <div className="text-4xl sm:text-6xl font-semibold tracking-tight text-center">
-            {Number.isNaN(value) ? "NaN" : value.toString()}
-          </div>
+          <input
+            className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none"
+            value={valueText}
+            onChange={handleValueChange}
+            onBlur={commitValue}
+            onKeyDown={(e) => { if (e.key === 'Enter') { commitValue(); } }}
+          />
         </section>
 
         <section className="flex flex-col items-center">

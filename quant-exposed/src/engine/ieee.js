@@ -90,7 +90,7 @@ export function bitsToArray(spec, bits) {
 }
 
 
-export function buildExplanation(spec, dec, value) {
+export function buildEquation(spec, dec, value) {
   const bias = spec.exponentBias;
   const mBits = spec.mantissaBits;
   const eBits = spec.exponentBits;
@@ -125,11 +125,136 @@ export function buildExplanation(spec, dec, value) {
   const base10 = `${signFactor} × 2^${expAdj} × ${mantissaFloat}`;
 
   const exact = Number.isFinite(value)
-    ? value.toExponential(12)
+    ? formatFiniteWith20DigitRule(value)
     : String(value);
 
   const ulp = Math.pow(2, (isSubnormal ? 1 - bias : expAdj) - mBits);
   const delta = `±${ulp.toExponential(12)}`;
 
   return { base2, base10, exact, delta };
+}
+
+export function formatFiniteWith20DigitRule(num) {
+  const expStr = num.toExponential();
+  const plain = expandExponentialToPlain(expStr);
+  const digitCount = plain.replace(/[^0-9]/g, '').length;
+  return digitCount > 20 ? expStr : plain;
+}
+
+export function expandExponentialToPlain(expStr) {
+  if (!/[eE]/.test(expStr)) return expStr;
+  const match = expStr.match(/^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
+  if (!match) return expStr;
+  const sign = match[1] || '';
+  const intPart = match[2] || '0';
+  const fracPart = match[3] || '';
+  const exp = parseInt(match[4], 10) || 0;
+
+  const digits = intPart + fracPart;
+  const pointIndex = intPart.length + exp;
+
+  if (pointIndex <= 0) {
+    const zeros = '0'.repeat(Math.abs(pointIndex));
+    return sign + '0.' + zeros + digits.replace(/^0+$/, '0');
+  }
+
+  if (pointIndex >= digits.length) {
+    const zeros = '0'.repeat(pointIndex - digits.length);
+    return sign + digits + zeros;
+  }
+
+  const left = digits.slice(0, pointIndex);
+  const right = digits.slice(pointIndex);
+  return sign + left + (right.length ? '.' + right : '');
+}
+
+// Convert a JavaScript number to the closest representable bit pattern for the given spec
+export function valueToBits(spec, x) {
+  if (Number.isNaN(x)) {
+    // Produce a NaN encoding if supported; otherwise return zero
+    const allOnesExp = (1 << spec.exponentBits) - 1;
+    if (spec.hasNaN) {
+      const nanSig = spec.mantissaBits > 0 ? 1n : 0n;
+      return composeBits(spec, { sign: 0, exponent: allOnesExp, significand: nanSig });
+    }
+    return 0n;
+  }
+
+  if (!Number.isFinite(x)) {
+    const sign = x < 0 ? 1 : 0;
+    const allOnesExp = (1 << spec.exponentBits) - 1;
+    if (spec.hasInfinity) {
+      return composeBits(spec, { sign, exponent: allOnesExp, significand: 0n });
+    }
+    // Clamp to max finite normal for formats without infinity
+    const maxFiniteExp = allOnesExp - 1;
+    const maxSig = (1n << BigInt(spec.mantissaBits)) - 1n;
+    return composeBits(spec, { sign, exponent: maxFiniteExp, significand: maxSig });
+  }
+
+  // Handle signed zeros
+  if (Object.is(x, 0) || Object.is(x, -0)) {
+    const sign = Object.is(x, -0) ? 1 : 0;
+    return composeBits(spec, { sign, exponent: 0, significand: 0n });
+  }
+
+  const sign = x < 0 ? 1 : 0;
+  const ax = Math.abs(x);
+
+  const bias = spec.exponentBias;
+  const mBits = spec.mantissaBits;
+  const eBits = spec.exponentBits;
+  const maxExp = (1 << eBits) - 1;
+  const maxFiniteExp = maxExp - 1;
+
+  // Threshold for smallest normal: 2^(1-bias)
+  const smallestNormal = Math.pow(2, 1 - bias);
+
+  if (ax < smallestNormal) {
+    // Subnormal: value = 2^(1-bias) * (mantissa / 2^mBits)
+    const scale = Math.pow(2, 1 - bias - mBits);
+    // Round to nearest even by using Math.round; JS uses ties to +Infinity, which is fine here
+    let mantissa = Math.round(ax / scale);
+    if (mantissa <= 0) {
+      return composeBits(spec, { sign, exponent: 0, significand: 0n });
+    }
+    const maxMantissa = (1 << mBits) - 1;
+    if (mantissa > maxMantissa) {
+      // Rounded up past subnormal range -> smallest normal
+      mantissa = maxMantissa;
+    }
+    return composeBits(spec, { sign, exponent: 0, significand: BigInt(mantissa) });
+  }
+
+  // Normal numbers
+  let exp = Math.floor(Math.log2(ax));
+  let frac = ax / Math.pow(2, exp); // in [1, 2)
+  let mantissa = Math.round((frac - 1) * Math.pow(2, mBits));
+
+  // Handle rounding that bumps mantissa to 2^m -> increment exponent
+  const oneULP = 1 << mBits;
+  if (mantissa === oneULP) {
+    mantissa = 0;
+    exp += 1;
+  }
+
+  let expRaw = exp + bias;
+  if (expRaw >= maxExp) {
+    // Overflow to infinity if supported or clamp to max finite
+    if (spec.hasInfinity) {
+      return composeBits(spec, { sign, exponent: maxExp, significand: 0n });
+    }
+    return composeBits(spec, { sign, exponent: maxFiniteExp, significand: (1n << BigInt(mBits)) - 1n });
+  }
+
+  if (expRaw <= 0) {
+    // Fell into subnormal due to very small value after rounding
+    // Represent as subnormal
+    const scale = Math.pow(2, 1 - bias - mBits);
+    const subMantissa = Math.round(ax / scale);
+    const clamped = Math.max(0, Math.min((1 << mBits) - 1, subMantissa));
+    return composeBits(spec, { sign, exponent: 0, significand: BigInt(clamped) });
+  }
+
+  return composeBits(spec, { sign, exponent: expRaw, significand: BigInt(mantissa) });
 }
