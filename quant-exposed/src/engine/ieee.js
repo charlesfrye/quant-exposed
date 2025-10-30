@@ -5,11 +5,19 @@ export const FORMATS = Object.fromEntries(
   Object.entries(MX_FORMATS).map(([key, info]) => [key, new FormatDefinition(info)])
 );
 
-export function maxValues(spec) {
-  const maxExp = (1 << spec.exponentBits) - 1;
-  const maxSig = (1n << BigInt(spec.mantissaBits)) - 1n;
-  return { maxExponent: maxExp, maxSignificand: maxSig };
+export function extract(spec, bits) {
+  const nbits = Number(bits);
+  const sign = spec.extractSign(nbits);
+  const exponent = spec.extractExponent(nbits);
+  const mantissa = spec.extractMantissa(nbits);
+  return { sign, exponent, significand: BigInt(mantissa) };
 }
+
+/* 
+ * ---------------------------------
+ * Bits to Value Section
+ * ---------------------------------  
+ */
 
 export function composeBits(spec, d) {
   // build a number bit pattern via FormatDefinition conventions
@@ -25,14 +33,6 @@ export function composeBits(spec, d) {
   return bits;
 }
 
-export function extract(spec, bits) {
-  const nbits = Number(bits);
-  const sign = spec.extractSign(nbits);
-  const exponent = spec.extractExponent(nbits);
-  const mantissa = spec.extractMantissa(nbits);
-  return { sign, exponent, significand: BigInt(mantissa) };
-}
-
 export function bitsToValue(spec, bits) {
   const nbits = Number(bits);
   return spec.bitsToValue(nbits);
@@ -46,6 +46,14 @@ export function bitsToRawHex(spec, bits) {
 
 export function bitsToRawDecimal(bits) {
   return bits.toString(10);
+}
+
+export function bitsToArray(spec, bits) {
+  const out = [];
+  for (let i = spec.totalBits - 1; i >= 0; i--) {
+    out.push(Number((bits >> BigInt(i)) & 1n));
+  }
+  return out;
 }
 
 export function bitsToHexFloat(spec, bits) {
@@ -73,133 +81,11 @@ function fractionToHex(mantissaBits, mantissa) {
   return s || '0';
 }
 
-export function clampDecomposed(spec, d) {
-  const { maxExponent, maxSignificand } = maxValues(spec);
-  const exponent = Math.max(0, Math.min(maxExponent, d.exponent));
-  const significand = d.significand < 0n ? 0n : d.significand > maxSignificand ? maxSignificand : d.significand;
-  const sign = d.sign ? 1 : 0;
-  return { sign, exponent, significand };
-}
-
-export function bitsToArray(spec, bits) {
-  const out = [];
-  for (let i = spec.totalBits - 1; i >= 0; i--) {
-    out.push(Number((bits >> BigInt(i)) & 1n));
-  }
-  return out;
-}
-
-export function buildBase2Equation(spec, dec) {
-  const eBits = spec.exponentBits;
-  const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  if (isSpecial) return 'Special (NaN/∞)';
-
-  const mBits = spec.mantissaBits;
-  const bias = spec.exponentBias;
-  const isSubnormal = expRaw === 0;
-
-  const fracBin = dec.significand
-    .toString(2)
-    .padStart(mBits, '0');
-  const base2Mantissa = isSubnormal ? `0.${fracBin}` : `1.${fracBin}`;
-  const expRawBin = expRaw.toString(2).padStart(eBits, '0');
-  const biasBin = bias.toString(2).padStart(eBits, '0');
-
-  return `(-1)^${dec.sign} × 2^(${expRawBin}₂ - ${biasBin}₂) × ${base2Mantissa}₂`;
-}
-
-export function buildBase10Equation(spec, dec) {
-  const eBits = spec.exponentBits;
-  const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  if (isSpecial) return 'Special (NaN/∞)';
-
-  const bias = spec.exponentBias;
-  const mBits = spec.mantissaBits;
-  const isSubnormal = expRaw === 0;
-  const signFactor = dec.sign ? -1 : 1;
-
-  const expAdj = isSubnormal ? 1 - bias : expRaw - bias;
-  const mantissaFloat = isSubnormal
-    ? Number(dec.significand) / Math.pow(2, mBits)
-    : 1 + Number(dec.significand) / Math.pow(2, mBits);
-
-  return `${signFactor} × 2^${expAdj} × ${mantissaFloat}`;
-}
-
-
-// Compute the distance to the next representable number (ULP) for a given decomposed value
-export function computeUlp(spec, dec) {
-  const bias = spec.exponentBias;
-  const mBits = spec.mantissaBits;
-  const isSubnormal = dec.exponent === 0;
-  const expAdj = isSubnormal ? 1 - bias : dec.exponent - bias;
-  return Math.pow(2, expAdj - mBits);
-}
-
-// Return a user-facing delta string for the given decomposed value
-export function getDelta(spec, dec) {
-  const eBits = spec.exponentBits;
-  const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  if (isSpecial) return 'N/A';
-  const ulp = computeUlp(spec, dec);
-  return `±${ulp.toExponential(12)}`;
-}
-
-// Return a user-facing exact value string mirroring the 20-digit rule
-export function getExactBase10Value(spec, dec, value) {
-  const eBits = spec.exponentBits;
-  const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  const signFactor = dec.sign ? -1 : 1;
-  if (isSpecial) {
-    return Number.isNaN(value) ? 'NaN' : (signFactor < 0 ? '-Infinity' : 'Infinity');
-  }
-  return Number.isFinite(value)
-    ? formatFiniteWith20DigitRule(value)
-    : String(value);
-}
-
-/**
- * Switch to exponential notation if the number has more than 20 digits of precision
- * @param {number} num - The number to format
- * @returns {string} The formatted number
+/* 
+ * ---------------------------------
+ * Value to Bits Section
+ * ---------------------------------  
  */
-export function formatFiniteWith20DigitRule(num) {
-  const expStr = num.toExponential();
-  const plain = expandExponentialToPlain(expStr);
-  const digitCount = plain.replace(/[^0-9]/g, '').length;
-  return digitCount > 20 ? expStr : plain;
-}
-
-export function expandExponentialToPlain(expStr) {
-  if (!/[eE]/.test(expStr)) return expStr;
-  const match = expStr.match(/^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
-  if (!match) return expStr;
-  const sign = match[1] || '';
-  const intPart = match[2] || '0';
-  const fracPart = match[3] || '';
-  const exp = parseInt(match[4], 10) || 0;
-
-  const digits = intPart + fracPart;
-  const pointIndex = intPart.length + exp;
-
-  if (pointIndex <= 0) {
-    const zeros = '0'.repeat(Math.abs(pointIndex));
-    return sign + '0.' + zeros + digits.replace(/^0+$/, '0');
-  }
-
-  if (pointIndex >= digits.length) {
-    const zeros = '0'.repeat(pointIndex - digits.length);
-    return sign + digits + zeros;
-  }
-
-  const left = digits.slice(0, pointIndex);
-  const right = digits.slice(pointIndex);
-  return sign + left + (right.length ? '.' + right : '');
-}
 
 // Convert a JavaScript number to the closest representable bit pattern for the given spec
 export function valueToBits(spec, x) {
@@ -290,4 +176,145 @@ export function valueToBits(spec, x) {
   }
 
   return composeBits(spec, { sign, exponent: expRaw, significand: BigInt(mantissa) });
+}
+
+
+/* 
+ * ---------------------------------
+ * Clamping Section
+ * ---------------------------------  
+ */
+
+export function maxValues(spec) {
+  const maxExp = (1 << spec.exponentBits) - 1;
+  const maxSig = (1n << BigInt(spec.mantissaBits)) - 1n;
+  return { maxExponent: maxExp, maxSignificand: maxSig };
+}
+
+export function clampDecomposed(spec, d) {
+  const { maxExponent, maxSignificand } = maxValues(spec);
+  const exponent = Math.max(0, Math.min(maxExponent, d.exponent));
+  const significand = d.significand < 0n ? 0n : d.significand > maxSignificand ? maxSignificand : d.significand;
+  const sign = d.sign ? 1 : 0;
+  return { sign, exponent, significand };
+}
+
+/* 
+ * ---------------------------------
+ * Delta / ULP Section
+ * ---------------------------------  
+ */
+
+// Compute the distance to the next representable number (ULP) for a given decomposed value
+export function computeUlp(spec, dec) {
+  const bias = spec.exponentBias;
+  const mBits = spec.mantissaBits;
+  const isSubnormal = dec.exponent === 0;
+  const expAdj = isSubnormal ? 1 - bias : dec.exponent - bias;
+  return Math.pow(2, expAdj - mBits);
+}
+
+// Return a user-facing delta string for the given decomposed value
+export function getDelta(spec, dec) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  if (isSpecial) return 'N/A';
+  const ulp = computeUlp(spec, dec);
+  return `±${ulp.toExponential(12)}`;
+}
+
+/* 
+ * ---------------------------------
+ * Formatting Section
+ * ---------------------------------  
+ */
+
+// If a number has more than 20 digits of precision, switch to exponential notation
+export function formatFiniteWith20DigitRule(num) {
+  const expStr = num.toExponential();
+  const plain = expandExponentialToPlain(expStr);
+  const digitCount = plain.replace(/[^0-9]/g, '').length;
+  return digitCount > 20 ? expStr : plain;
+}
+
+export function expandExponentialToPlain(expStr) {
+  if (!/[eE]/.test(expStr)) return expStr;
+  const match = expStr.match(/^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
+  if (!match) return expStr;
+  const sign = match[1] || '';
+  const intPart = match[2] || '0';
+  const fracPart = match[3] || '';
+  const exp = parseInt(match[4], 10) || 0;
+
+  const digits = intPart + fracPart;
+  const pointIndex = intPart.length + exp;
+
+  if (pointIndex <= 0) {
+    const zeros = '0'.repeat(Math.abs(pointIndex));
+    return sign + '0.' + zeros + digits.replace(/^0+$/, '0');
+  }
+
+  if (pointIndex >= digits.length) {
+    const zeros = '0'.repeat(pointIndex - digits.length);
+    return sign + digits + zeros;
+  }
+
+  const left = digits.slice(0, pointIndex);
+  const right = digits.slice(pointIndex);
+  return sign + left + (right.length ? '.' + right : '');
+}
+
+
+export function buildBase2Equation(spec, dec) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  if (isSpecial) return 'Special (NaN/∞)';
+
+  const mBits = spec.mantissaBits;
+  const bias = spec.exponentBias;
+  const isSubnormal = expRaw === 0;
+
+  const fracBin = dec.significand
+    .toString(2)
+    .padStart(mBits, '0');
+  const base2Mantissa = isSubnormal ? `0.${fracBin}` : `1.${fracBin}`;
+  const expRawBin = expRaw.toString(2).padStart(eBits, '0');
+  const biasBin = bias.toString(2).padStart(eBits, '0');
+
+  return `(-1)^${dec.sign} × 2^(${expRawBin}₂ - ${biasBin}₂) × ${base2Mantissa}₂`;
+}
+
+export function buildBase10Equation(spec, dec) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  if (isSpecial) return 'Special (NaN/∞)';
+
+  const bias = spec.exponentBias;
+  const mBits = spec.mantissaBits;
+  const isSubnormal = expRaw === 0;
+  const signFactor = dec.sign ? -1 : 1;
+
+  const expAdj = isSubnormal ? 1 - bias : expRaw - bias;
+  const mantissaFloat = isSubnormal
+    ? Number(dec.significand) / Math.pow(2, mBits)
+    : 1 + Number(dec.significand) / Math.pow(2, mBits);
+
+  return `${signFactor} × 2^${expAdj} × ${mantissaFloat}`;
+}
+
+// Return a user-facing exact value string mirroring the 20-digit rule
+export function getExactBase10Value(spec, dec, value) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  const signFactor = dec.sign ? -1 : 1;
+  if (isSpecial) {
+    return Number.isNaN(value) ? 'NaN' : (signFactor < 0 ? '-Infinity' : 'Infinity');
+  }
+  return Number.isFinite(value)
+    ? formatFiniteWith20DigitRule(value)
+    : String(value);
 }
