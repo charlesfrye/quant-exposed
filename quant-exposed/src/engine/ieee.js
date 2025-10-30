@@ -89,51 +89,84 @@ export function bitsToArray(spec, bits) {
   return out;
 }
 
-
-export function buildEquation(spec, dec, value) {
-  const bias = spec.exponentBias;
-  const mBits = spec.mantissaBits;
+export function buildBase2Equation(spec, dec) {
   const eBits = spec.exponentBits;
   const expRaw = dec.exponent;
   const isSpecial = expRaw === (1 << eBits) - 1;
-  const signFactor = dec.sign ? -1 : 1;
+  if (isSpecial) return 'Special (NaN/∞)';
+
+  const mBits = spec.mantissaBits;
+  const bias = spec.exponentBias;
+  const isSubnormal = expRaw === 0;
 
   const fracBin = dec.significand
     .toString(2)
     .padStart(mBits, '0');
+  const base2Mantissa = isSubnormal ? `0.${fracBin}` : `1.${fracBin}`;
+  const expRawBin = expRaw.toString(2).padStart(eBits, '0');
+  const biasBin = bias.toString(2).padStart(eBits, '0');
 
-  if (isSpecial) {
-    return {
-      base2: 'Special (NaN/∞)',
-      base10: 'Special (NaN/∞)',
-      exact: Number.isNaN(value) ? 'NaN' : (signFactor < 0 ? '-Infinity' : 'Infinity'),
-      delta: 'N/A',
-    };
-  }
+  return `(-1)^${dec.sign} × 2^(${expRawBin}₂ - ${biasBin}₂) × ${base2Mantissa}₂`;
+}
 
+export function buildBase10Equation(spec, dec) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  if (isSpecial) return 'Special (NaN/∞)';
+
+  const bias = spec.exponentBias;
+  const mBits = spec.mantissaBits;
   const isSubnormal = expRaw === 0;
+  const signFactor = dec.sign ? -1 : 1;
+
   const expAdj = isSubnormal ? 1 - bias : expRaw - bias;
   const mantissaFloat = isSubnormal
     ? Number(dec.significand) / Math.pow(2, mBits)
     : 1 + Number(dec.significand) / Math.pow(2, mBits);
 
-  const base2Mantissa = isSubnormal ? `0.${fracBin}` : `1.${fracBin}`;
-  const expRawBin = expRaw.toString(2).padStart(eBits, '0');
-  const biasBin = bias.toString(2).padStart(eBits, '0');
-
-  const base2 = `(-1)^${dec.sign} × 2^(${expRawBin}₂ - ${biasBin}₂) × ${base2Mantissa}₂`;
-  const base10 = `${signFactor} × 2^${expAdj} × ${mantissaFloat}`;
-
-  const exact = Number.isFinite(value)
-    ? formatFiniteWith20DigitRule(value)
-    : String(value);
-
-  const ulp = Math.pow(2, (isSubnormal ? 1 - bias : expAdj) - mBits);
-  const delta = `±${ulp.toExponential(12)}`;
-
-  return { base2, base10, exact, delta };
+  return `${signFactor} × 2^${expAdj} × ${mantissaFloat}`;
 }
 
+
+// Compute the distance to the next representable number (ULP) for a given decomposed value
+export function computeUlp(spec, dec) {
+  const bias = spec.exponentBias;
+  const mBits = spec.mantissaBits;
+  const isSubnormal = dec.exponent === 0;
+  const expAdj = isSubnormal ? 1 - bias : dec.exponent - bias;
+  return Math.pow(2, expAdj - mBits);
+}
+
+// Return a user-facing delta string for the given decomposed value
+export function getDelta(spec, dec) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  if (isSpecial) return 'N/A';
+  const ulp = computeUlp(spec, dec);
+  return `±${ulp.toExponential(12)}`;
+}
+
+// Return a user-facing exact value string mirroring the 20-digit rule
+export function getExactBase10Value(spec, dec, value) {
+  const eBits = spec.exponentBits;
+  const expRaw = dec.exponent;
+  const isSpecial = expRaw === (1 << eBits) - 1;
+  const signFactor = dec.sign ? -1 : 1;
+  if (isSpecial) {
+    return Number.isNaN(value) ? 'NaN' : (signFactor < 0 ? '-Infinity' : 'Infinity');
+  }
+  return Number.isFinite(value)
+    ? formatFiniteWith20DigitRule(value)
+    : String(value);
+}
+
+/**
+ * Switch to exponential notation if the number has more than 20 digits of precision
+ * @param {number} num - The number to format
+ * @returns {string} The formatted number
+ */
 export function formatFiniteWith20DigitRule(num) {
   const expStr = num.toExponential();
   const plain = expandExponentialToPlain(expStr);

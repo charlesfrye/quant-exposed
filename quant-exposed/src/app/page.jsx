@@ -11,7 +11,10 @@ import {
   composeBits,
   extract,
   bitsToHexFloat,
-  buildEquation,
+  buildBase2Equation,
+  buildBase10Equation,
+  getDelta,
+  getExactBase10Value,
   valueToBits,
   formatFiniteWith20DigitRule,
 } from "@/engine/ieee";
@@ -30,7 +33,10 @@ export default function Home() {
   const rawDec = useMemo(() => bitsToRawDecimal(bits), [bits]);
   const hexFloat = useMemo(() => bitsToHexFloat(spec, bits), [spec, bits]);
 
-  const explain = useMemo(() => buildEquation(spec, dec, value), [spec, dec, value]);
+  const base2Text = useMemo(() => buildBase2Equation(spec, dec), [spec, dec]);
+  const base10Text = useMemo(() => buildBase10Equation(spec, dec), [spec, dec]);
+  const deltaText = useMemo(() => getDelta(spec, dec), [spec, dec]);
+  const exactText = useMemo(() => getExactBase10Value(spec, dec, value), [spec, dec, value]);
 
   const [valueText, setValueText] = useState("");
 
@@ -236,14 +242,14 @@ export default function Home() {
         </section>
 
         <section className="flex flex-col items-center gap-6 pt-6">
-          <BaseNField label="Evaluation in Base-2" value={explain.base2} />
-          <BaseNField label="Evaluation in Base-10" value={explain.base10} />
+          <BaseNField label="Evaluation in Base-2" value={base2Text} />
+          <BaseNField label="Evaluation in Base-10" value={base10Text} />
 
-          <BaseNField label="Exact Base-10 Value" value={explain.exact} />
+          <BaseNField label="Exact Base-10 Value" value={exactText} />
 
           <div className="w-full max-w-3xl my-2" />
 
-          <BaseNField label="Delta to Next/Previous Representable Value" value={explain.delta} /> </section>
+          <BaseNField label="Delta to Next/Previous Representable Value" value={deltaText} /> </section>
       </main>
     </div>
   );
