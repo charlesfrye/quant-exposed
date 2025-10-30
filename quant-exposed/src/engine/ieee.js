@@ -1,9 +1,9 @@
-export const FORMATS = {
-  half: { key: 'half', name: 'half', totalBits: 16, exponentBits: 5, mantissaBits: 10, exponentBias: 15 },
-  bfloat: { key: 'bfloat', name: 'bfloat', totalBits: 16, exponentBits: 8, mantissaBits: 7, exponentBias: 127 },
-  float: { key: 'float', name: 'float', totalBits: 32, exponentBits: 8, mantissaBits: 23, exponentBias: 127 },
-  double: { key: 'double', name: 'double', totalBits: 64, exponentBits: 11, mantissaBits: 52, exponentBias: 1023 },
-};
+import { FORMATS as MX_FORMATS } from "@/engine/constants";
+import { FormatDefinition } from "@/engine/FormatDefinition";
+
+export const FORMATS = Object.fromEntries(
+  Object.entries(MX_FORMATS).map(([key, info]) => [key, new FormatDefinition(info)])
+);
 
 export function maxValues(spec) {
   const maxExp = (1 << spec.exponentBits) - 1;
@@ -12,36 +12,30 @@ export function maxValues(spec) {
 }
 
 export function composeBits(spec, d) {
-  const signShift = BigInt(spec.totalBits - 1);
+  // build a number bit pattern via FormatDefinition conventions
+  const sign = (d.sign ? 1 : 0) & 1;
+  const exponent = Math.max(0, Math.min((1 << spec.exponentBits) - 1, d.exponent >>> 0));
+  const mantissaMask = (1n << BigInt(spec.mantissaBits)) - 1n;
+  const mantissa = (d.significand & mantissaMask);
+
   const expShift = BigInt(spec.mantissaBits);
-  const signPart = BigInt(d.sign & 1) << signShift;
-  const expPart = BigInt(d.exponent >>> 0) << expShift;
-  const sigPart = d.significand & ((1n << expShift) - 1n);
-  return signPart | expPart | sigPart;
+  const signShift = BigInt(spec.totalBits - 1);
+
+  const bits = (BigInt(sign) << signShift) | (BigInt(exponent) << expShift) | mantissa;
+  return bits;
 }
 
 export function extract(spec, bits) {
-  const sign = Number((bits >> BigInt(spec.totalBits - 1)) & 1n);
-  const exponent = Number((bits >> BigInt(spec.mantissaBits)) & ((1n << BigInt(spec.exponentBits)) - 1n));
-  const significand = bits & ((1n << BigInt(spec.mantissaBits)) - 1n);
-  return { sign, exponent, significand };
+  const nbits = Number(bits);
+  const sign = spec.extractSign(nbits);
+  const exponent = spec.extractExponent(nbits);
+  const mantissa = spec.extractMantissa(nbits);
+  return { sign, exponent, significand: BigInt(mantissa) };
 }
 
 export function bitsToValue(spec, bits) {
-  const { sign, exponent, significand } = extract(spec, bits);
-  const bias = spec.exponentBias;
-  const signFactor = sign ? -1 : 1;
-  if (exponent === (1 << spec.exponentBits) - 1) {
-    if (significand === 0n) return sign ? -Infinity : Infinity;
-    return NaN;
-  }
-  if (exponent === 0) {
-    if (significand === 0n) return sign ? -0 : 0;
-    const frac = Number(significand) / Math.pow(2, spec.mantissaBits);
-    return signFactor * Math.pow(2, 1 - bias) * frac;
-  }
-  const frac = 1 + Number(significand) / Math.pow(2, spec.mantissaBits);
-  return signFactor * Math.pow(2, exponent - bias) * frac;
+  const nbits = Number(bits);
+  return spec.bitsToValue(nbits);
 }
 
 export function bitsToRawHex(spec, bits) {
@@ -93,12 +87,6 @@ export function bitsToArray(spec, bits) {
     out.push(Number((bits >> BigInt(i)) & 1n));
   }
   return out;
-}
-
-export function arrayToBits(spec, arr) {
-  for (let i = 0; i < arr.length; i++) {
-  }
-  return null;
 }
 
 
