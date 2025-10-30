@@ -8,6 +8,10 @@ module.exports = {
     "^../../src/(.*)$": "<rootDir>/src/$1",
   },
   verbose: true,
+  // For Jest tests to run
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx|mjs)$': 'babel-jest',
+  },
 };
 
 
