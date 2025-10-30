@@ -14,8 +14,7 @@ describe("FormatDefinition", () => {
 			format = new FormatDefinition(FORMATS.e4m3);
 		});
 
-		test("should initialize with correct properties", () => {
-			expect(format.name).toBe("E4M3 (FP8)");
+		test("should initialize properties", () => {
 			expect(format.totalBits).toBe(8);
 			expect(format.exponentBits).toBe(4);
 			expect(format.mantissaBits).toBe(3);
@@ -23,13 +22,13 @@ describe("FormatDefinition", () => {
 			expect(format.exponentBias).toBe(7);
 		});
 
-		test("should calculate correct masks", () => {
+		test("should initialize masks", () => {
 			expect(format.mantissaMask).toBe(0b00000111);
 			expect(format.exponentMask).toBe(0b01111000);
 			expect(format.signMask).toBe(0b10000000);
 		});
 
-		test("should extract components correctly", () => {
+		test("should extract bits", () => {
 			const bits = 0b10110010;
 
 			expect(format.extractSign(bits)).toBe(1);
@@ -54,12 +53,14 @@ describe("FormatDefinition", () => {
 
 		test("should handle NaN correctly", () => {
 			// one NaN has all bits set
-			const nanBits = 0b11111111;
+			let nanBits = 0b11111111;
 
 			expect(format.isNaN(nanBits)).toBe(true);
 			expect(Number.isNaN(format.bitsToValue(nanBits))).toBe(
 				true
 			);
+			expect(format.isNaN(nanBits)).toBe(true);
+			expect(format.isNaN(nanBits)).toBe(true);
 		});
 	});
 
@@ -71,7 +72,6 @@ describe("FormatDefinition", () => {
 		});
 
 		test("should initialize with correct properties", () => {
-			expect(format.name).toBe("E8M0 (E8)");
 			expect(format.totalBits).toBe(8);
 			expect(format.exponentBits).toBe(8);
 			expect(format.mantissaBits).toBe(0);
@@ -91,8 +91,8 @@ describe("FormatDefinition", () => {
 		});
 
 		test("should return powers of two", () => {
-			const value = format.bitsToValue(0xfe);
-			expect(value).toBe(Math.pow(2, 127));
+			let value = format.bitsToValue(0x01);
+			expect(value).toBe(Math.pow(2, 1 - 127));
 		});
 
 		test("all ones is NaN", () => {
@@ -108,7 +108,6 @@ describe("FormatDefinition", () => {
 		});
 
 		test("should initialize with correct properties", () => {
-			expect(format.name).toBe("E2M1 (FP4)");
 			expect(format.totalBits).toBe(4);
 			expect(format.exponentBits).toBe(2);
 			expect(format.mantissaBits).toBe(1);

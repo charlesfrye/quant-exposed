@@ -5,17 +5,17 @@
 
 export const FORMATS = {
 	e4m3: {
-		name: "E4M3 (FP8)",
+		name: "FP8 (E4M3)",
 		totalBits: 8,
 		exponentBits: 4,
 		mantissaBits: 3,
 		exponentBias: 7,
 		hasInfinity: false,
 		hasNaN: true,
-		nanPatterns: [0b011111_11],
+		nanPatterns: [0b011111_11], // all mantissa bits must also be 1
 	},
 	e5m2: {
-		name: "E5M2 (FP8)",
+		name: "FP8 (E5M2)",
 		totalBits: 8,
 		exponentBits: 5,
 		mantissaBits: 2,
@@ -24,7 +24,7 @@ export const FORMATS = {
 		hasNaN: true,
 	},
 	e8m0: {
-		name: "E8M0 (E8)",
+		name: "E8 (E8M0)",
 		totalBits: 8,
 		exponentBits: 8,
 		mantissaBits: 0,
@@ -33,7 +33,7 @@ export const FORMATS = {
 		hasNaN: true,
 	},
 	e2m3: {
-		name: "E2M3 (FP6)",
+		name: "FP6 (E2M3)",
 		totalBits: 6,
 		exponentBits: 2,
 		mantissaBits: 3,
@@ -42,7 +42,7 @@ export const FORMATS = {
 		hasNaN: false,
 	},
 	e3m2: {
-		name: "E3M2 (FP6)",
+		name: "FP6 (E3M2)",
 		totalBits: 6,
 		exponentBits: 3,
 		mantissaBits: 2,
@@ -51,7 +51,7 @@ export const FORMATS = {
 		hasNaN: false,
 	},
 	e2m1: {
-		name: "E2M1 (FP4)",
+		name: "FP4 (E2M1)",
 		totalBits: 4,
 		exponentBits: 2,
 		mantissaBits: 1,
