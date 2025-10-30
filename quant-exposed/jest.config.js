@@ -3,12 +3,11 @@ module.exports = {
   roots: ["<rootDir>/tests"],
   moduleFileExtensions: ["js", "jsx"],
   testPathIgnorePatterns: ["/node_modules/", "/.next/"],
-  transform: {
-    "^.+\\.(js|jsx)$": "babel-jest",
-  },
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^../../src/(.*)$": "<rootDir>/src/$1",
   },
   verbose: true,
 };
+
+
