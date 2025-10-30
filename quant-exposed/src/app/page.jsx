@@ -13,11 +13,16 @@ import {
   bitsToHexFloat,
   buildBase2Equation,
   buildBase10Equation,
-  getDelta,
   getExactBase10Value,
   valueToBits,
   formatFiniteWith20DigitRule,
 } from "@/engine/ieee";
+
+import Bit from "@/components/Bit";
+import LineBreak from "@/components/LineBreak";
+import Field from "@/components/Field";
+import BaseNField from "@/components/BaseNField";
+import FormatSelector from "@/components/FormatSelector";
 
 export default function Home() {
   const [formatKey, setFormatKey] = useState("e4m3");
@@ -35,7 +40,6 @@ export default function Home() {
 
   const base2Text = useMemo(() => buildBase2Equation(spec, dec), [spec, dec]);
   const base10Text = useMemo(() => buildBase10Equation(spec, dec), [spec, dec]);
-  const deltaText = useMemo(() => getDelta(spec, dec), [spec, dec]);
   const exactText = useMemo(() => getExactBase10Value(spec, dec, value), [spec, dec, value]);
 
   const [valueText, setValueText] = useState("");
@@ -136,31 +140,25 @@ export default function Home() {
   const [g1, g2, g3] = groups;
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans">
+    <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans overflow-x-hidden">
       <main className="flex w-full max-w-4xl flex-col gap-8 p-10">
-        <div className="flex gap-2">
-          {Object.entries(FORMATS).map(([k, s]) => (
-            <button
-              key={k}
-              onClick={() => changeFormat(k)}
-              className={`rounded-full border px-4 py-1 text-sm ${k === formatKey ? "bg-black text-white" : "bg-white"}`}
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
+        <FormatSelector
+          formats={FORMATS}
+          selectedFormat={formatKey}
+          onFormatChange={changeFormat}
+        />
 
-        <section className="flex flex-col items-center">
+        <section className="flex flex-col items-center w-full">
           <div className="text-zinc-500 mb-2 text-center">Value</div>
           <input
-            className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none"
+            className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none w-full max-w-full h-12"
             value={valueText}
             onChange={handleValueChange}
             onBlur={commitValue}
             onKeyDown={(e) => { if (e.key === 'Enter') { commitValue(); } }}
           />
         </section>
-
+        <LineBreak />
         <section className="flex flex-col items-center">
           <div className="text-zinc-500 mb-2 text-center">Bit Pattern</div>
           <div className="flex flex-wrap gap-4 text-2xl font-mono justify-center">
@@ -182,37 +180,34 @@ export default function Home() {
               </div>
               <div className="text-xs text-zinc-500 mb-1">Exponent</div>
             </div>
-            <div className="flex flex-col items-center">
-
-              <div className="flex gap-1">
-                {bitArray
-                  .slice(g1 + g2, g1 + g2 + g3)
-                  .map((b, i) => (
-                    <Bit
-                      key={`m-${i}`}
-                      bit={b}
-                      title="Significand"
-                      onClick={() => toggleBit(g1 + g2 + i)}
-                    />
-                  ))}
+            {g3 > 0 && (
+              <div className="flex flex-col items-center">
+                <div className="flex gap-1">
+                  {bitArray
+                    .slice(g1 + g2, g1 + g2 + g3)
+                    .map((b, i) => (
+                      <Bit
+                        key={`m-${i}`}
+                        bit={b}
+                        title="Significand"
+                        onClick={() => toggleBit(g1 + g2 + i)}
+                      />
+                    ))}
+                </div>
+                <div className="text-xs text-zinc-500 mb-1">Significand</div>
               </div>
-              <div className="text-xs text-zinc-500 mb-1">Significand</div>
-            </div>
+            )}
           </div>
         </section>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <LineBreak />
+
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <Field
             label="Sign"
             value={dec.sign}
             onDec={() => applyDecomposed({ sign: 0 })}
             onInc={() => applyDecomposed({ sign: 1 })}
-          />
-          <Field
-            label="Raw Hexadecimal Integer Value"
-            value={rawHex}
-            onDec={() => applyDecomposed({ significand: dec.significand - 1n })}
-            onInc={() => applyDecomposed({ significand: dec.significand + 1n })}
           />
           <Field
             label="Exponent"
@@ -221,14 +216,20 @@ export default function Home() {
             onInc={() => applyDecomposed({ exponent: dec.exponent + 1 })}
           />
           <Field
-            label="Raw Decimal Integer Value"
-            value={rawDec}
+            label="Significand"
+            value={Number(dec.significand)}
             onDec={() => applyDecomposed({ significand: dec.significand - 1n })}
             onInc={() => applyDecomposed({ significand: dec.significand + 1n })}
           />
           <Field
-            label="Significand"
-            value={Number(dec.significand)}
+            label="Raw Hexadecimal Integer Value"
+            value={rawHex}
+            onDec={() => applyDecomposed({ significand: dec.significand - 1n })}
+            onInc={() => applyDecomposed({ significand: dec.significand + 1n })}
+          />
+          <Field
+            label="Raw Decimal Integer Value"
+            value={rawDec}
             onDec={() => applyDecomposed({ significand: dec.significand - 1n })}
             onInc={() => applyDecomposed({ significand: dec.significand + 1n })}
           />
@@ -241,76 +242,18 @@ export default function Home() {
 
         </section>
 
-        <section className="flex flex-col items-center gap-6 pt-6">
+        <LineBreak />
+
+        <section className="flex flex-col items-center gap-6">
           <BaseNField label="Evaluation in Base-2" value={base2Text} />
           <BaseNField label="Evaluation in Base-10" value={base10Text} />
-
           <BaseNField label="Exact Base-10 Value" value={exactText} />
-
-          <div className="w-full max-w-3xl my-2" />
-
-          <BaseNField label="Delta to Next/Previous Representable Value" value={deltaText} /> </section>
+        </section>
       </main>
     </div>
   );
 }
 
-function BaseNField({ label, value }) {
-  return (
-    <div>
-      <div className="text-zinc-500 text-center">{label}</div>
-      <div className="text-xl font-semibold tracking-tight text-center font-mono">
-        {value}
-      </div>
-    </div>
-  );
-}
 
-function Bit({ bit, title, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      className={`h-10 w-10 rounded-md border text-xl font-semibold ${bit ? "bg-black text-white" : "bg-white"}`}
-    >
-      {bit}
-    </button>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onDec,
-  onInc,
-}) {
-  return (
-    <div className="grid gap-1">
-      <div className="text-zinc-500">{label}</div>
-      <div className="flex items-center gap-2">
-        <input
-          className="flex-1 rounded-md border px-3 py-2 font-mono"
-          readOnly
-          value={value}
-        />
-        <div className="flex flex-col gap-px">
-          <button
-            className="h-5 w-5 rounded-md border font-semibold text-sm leading-none flex items-center justify-center"
-            onClick={onInc}
-          >
-            +
-          </button>
-          <button
-            className="h-5 w-5 rounded-md border font-semibold text-sm leading-none flex items-center justify-center"
-            onClick={onDec}
-          >
-            -
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 

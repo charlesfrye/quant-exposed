@@ -201,31 +201,6 @@ export function clampDecomposed(spec, d) {
 
 /* 
  * ---------------------------------
- * Delta / ULP Section
- * ---------------------------------  
- */
-
-// Compute the distance to the next representable number (ULP) for a given decomposed value
-export function computeUlp(spec, dec) {
-  const bias = spec.exponentBias;
-  const mBits = spec.mantissaBits;
-  const isSubnormal = dec.exponent === 0;
-  const expAdj = isSubnormal ? 1 - bias : dec.exponent - bias;
-  return Math.pow(2, expAdj - mBits);
-}
-
-// Return a user-facing delta string for the given decomposed value
-export function getDelta(spec, dec) {
-  const eBits = spec.exponentBits;
-  const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  if (isSpecial) return 'N/A';
-  const ulp = computeUlp(spec, dec);
-  return `±${ulp.toExponential(12)}`;
-}
-
-/* 
- * ---------------------------------
  * Formatting Section
  * ---------------------------------  
  */
