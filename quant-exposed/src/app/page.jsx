@@ -10,7 +10,8 @@ import {
   clampDecomposed,
   composeBits,
   extract,
-  bitsToHexFloat
+  bitsToHexFloat,
+  buildExplanation,
 } from "@/engine/ieee";
 
 export default function Home() {
@@ -26,6 +27,8 @@ export default function Home() {
   const rawHex = useMemo(() => bitsToRawHex(spec, bits), [spec, bits]);
   const rawDec = useMemo(() => bitsToRawDecimal(bits), [bits]);
   const hexFloat = useMemo(() => bitsToHexFloat(spec, bits), [spec, bits]);
+
+  const explain = useMemo(() => buildExplanation(spec, dec, value), [spec, dec, value]);
 
   function applyDecomposed(update) {
     const next = clampDecomposed(spec, { ...dec, ...update });
@@ -157,7 +160,28 @@ export default function Home() {
           />
 
         </section>
+
+        <section className="flex flex-col items-center gap-6 pt-6">
+          <BaseNField label="Evaluation in Base-2" value={explain.base2} />
+          <BaseNField label="Evaluation in Base-10" value={explain.base10} />
+
+          <BaseNField label="Exact Base-10 Value" value={explain.exact} />
+
+          <div className="w-full max-w-3xl my-2" />
+
+          <BaseNField label="Delta to Next/Previous Representable Value" value={explain.delta} /> </section>
       </main>
+    </div>
+  );
+}
+
+function BaseNField({ label, value }) {
+  return (
+    <div>
+      <div className="text-zinc-500 text-center">{label}</div>
+      <div className="text-xl font-semibold tracking-tight text-center font-mono">
+        {value}
+      </div>
     </div>
   );
 }
