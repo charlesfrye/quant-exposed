@@ -4,6 +4,15 @@
  */
 
 export const FORMATS = {
+  fp16: {
+    name: "FP16 (FP16)",
+    totalBits: 16,
+    exponentBits: 5,
+    mantissaBits: 10,
+    exponentBias: 15,
+    hasInfinity: true,
+    hasNaN: true,
+  },
   bf16: {
     name: "bfloat16 (BF16)",
     totalBits: 16,
