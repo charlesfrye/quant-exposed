@@ -93,7 +93,7 @@ describe("ieee.js", () => {
         expect(negValue).toBe(-448);
 
         // Check the base-2 and 10 rendering for max normal value
-        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 2^(1111_2 - 0111_2) × 1.110_2");
+        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1111_2 - 0111_2) × 1.110_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^8 × 1.75");
         expect(getExactBase10Value(E4M3, decomp, value)).toBe("448");
 
@@ -119,7 +119,7 @@ describe("ieee.js", () => {
         expect(negValue).toBe(-0.015625);
 
         // Check the base-2 and 10 rendering for max normal value
-        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 2^(0001_2 - 0111_2) × 1.000_2");
+        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(0001_2 - 0111_2) × 1.000_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-6 × 1");
         expect(getExactBase10Value(E4M3, decomp, value)).toBe("0.015625");
 
@@ -144,7 +144,7 @@ describe("ieee.js", () => {
         expect(negValue).toBeCloseTo(-Math.pow(2, -6) * 0.875, 10);
         expect(negValue).toBe(-0.013671875);
 
-        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 2^(1 - 0111_2) × 0.111_2");
+        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 0111_2) × 0.111_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-9 × 7");
         expect(getExactBase10Value(E4M3, decomp, value)).toBe("0.013671875");
 
@@ -169,7 +169,7 @@ describe("ieee.js", () => {
         expect(negValue).toBeCloseTo(-Math.pow(2, -9), 10);
         expect(negValue).toBe(-0.001953125);
 
-        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 2^(1 - 0111_2) × 0.001_2");
+        expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 0111_2) × 0.001_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-9");
         expect(getExactBase10Value(E4M3, decomp, value)).toBe("0.001953125");
 
@@ -276,7 +276,7 @@ describe("ieee.js", () => {
         expect(negValue).toBeCloseTo(-57344, 0);
         expect(negValue).toBe(-57344);
 
-        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 2^(11110_2 - 01111_2) × 1.11_2");
+        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(11110_2 - 01111_2) × 1.11_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^15 × 1.75");
         expect(getExactBase10Value(E5M2, decomp, value)).toBe("57344");
       });
@@ -298,7 +298,7 @@ describe("ieee.js", () => {
         expect(negValue).toBeCloseTo(-Math.pow(2, -14), 15);
         expect(negValue).toBe(-0.00006103515625);
 
-        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 2^(00001_2 - 01111_2) × 1.00_2");
+        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(00001_2 - 01111_2) × 1.00_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-14 × 1");
         expect(getExactBase10Value(E5M2, decomp, value)).toBe("0.00006103515625");
       });
@@ -320,7 +320,7 @@ describe("ieee.js", () => {
         expect(negValue).toBeCloseTo(-Math.pow(2, -14) * 0.75, 15);
         expect(negValue).toBe(-0.0000457763671875);
 
-        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 2^(1 - 01111_2) × 0.11_2");
+        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111_2) × 0.11_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-16 × 3");
         expect(getExactBase10Value(E5M2, decomp, value)).toBe("0.0000457763671875");
 
@@ -345,7 +345,7 @@ describe("ieee.js", () => {
         expect(negValue).toBeCloseTo(-Math.pow(2, -16), 15);
         expect(negValue).toBe(-0.0000152587890625);
 
-        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 2^(1 - 01111_2) × 0.01_2");
+        expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111_2) × 0.01_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-16");
         expect(getExactBase10Value(E5M2, decomp, value)).toBe("0.0000152587890625");
 
