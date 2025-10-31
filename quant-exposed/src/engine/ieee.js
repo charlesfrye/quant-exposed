@@ -13,10 +13,10 @@ export function extract(spec, bits) {
   return { sign, exponent, significand: BigInt(mantissa) };
 }
 
-/* 
+/*
  * ---------------------------------
  * Bits to Value Section
- * ---------------------------------  
+ * ---------------------------------
  */
 
 export function composeBits(spec, d) {
@@ -94,10 +94,10 @@ function fractionToHex(mantissaBits, mantissa) {
   return s || '0';
 }
 
-/* 
+/*
  * ---------------------------------
  * Value to Bits Section
- * ---------------------------------  
+ * ---------------------------------
  */
 
 // Convert a JavaScript number to the closest representable bit pattern for the given spec
@@ -208,10 +208,10 @@ export function valueToBits(spec, x) {
 }
 
 
-/* 
+/*
  * ---------------------------------
  * Clamping Section
- * ---------------------------------  
+ * ---------------------------------
  */
 
 export function maxValues(spec) {
@@ -309,10 +309,10 @@ export function normalizeInputValue(spec, value) {
   return { value };
 }
 
-/* 
+/*
  * ---------------------------------
  * Formatting Section
- * ---------------------------------  
+ * ---------------------------------
  */
 
 // If a number has more than 20 digits of precision, switch to exponential notation
@@ -376,10 +376,10 @@ export function buildBase2Equation(spec, dec) {
   if (expRaw === maxExp && (hasInfinity || hasNaN)) {
     const bits = Number(composeBits(spec, dec));
     if (hasInfinity && spec.isInfinity(bits)) {
-      return 'Special (NaN/∞)';
+      return sign ? '-∞' : '∞';
     }
     if (hasNaN && spec.isNaN(bits)) {
-      return 'Special (NaN/∞)';
+      return 'Not a Number';
     }
   }
 
@@ -407,10 +407,10 @@ export function buildBase10Equation(spec, dec) {
   if (expRaw === maxExp && (spec.hasInfinity || spec.hasNaN)) {
     const bits = Number(composeBits(spec, dec));
     if (spec.hasInfinity && spec.isInfinity(bits)) {
-      return 'Special (NaN/∞)';
+      return dec.sign ? '-∞' : '∞';
     }
     if (spec.hasNaN && spec.isNaN(bits)) {
-      return 'Special (NaN/∞)';
+      return 'Not a Number';
     }
   }
 
@@ -458,10 +458,10 @@ export function getExactBase10Value(spec, dec, value) {
   if (expRaw === maxExp && (spec.hasInfinity || spec.hasNaN)) {
     const bits = Number(composeBits(spec, dec));
     if (spec.hasInfinity && spec.isInfinity(bits)) {
-      return signFactor < 0 ? '-Infinity' : 'Infinity';
+      return signFactor < 0 ? '-∞' : '∞';
     }
     if (spec.hasNaN && spec.isNaN(bits)) {
-      return 'NaN';
+      return 'Not a Number';
     }
   }
   return Number.isFinite(value)
