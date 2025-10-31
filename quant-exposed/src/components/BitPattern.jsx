@@ -1,21 +1,25 @@
 import Bit from "@/components/Bit";
 
 export default function BitPattern({ bitArray, spec, toggleBit }) {
-  const groups = [1, spec.exponentBits, spec.mantissaBits];
-  const [g1, g2, g3] = groups;
+  // Number of sign bits is what is left after accounting for exponent and mantissa
+  const g1 = spec.totalBits - spec.exponentBits - spec.mantissaBits;
+  const g2 = spec.exponentBits;
+  const g3 = spec.mantissaBits;
 
   return (
     <>
       <div className="text-zinc-500 mb-2 text-center">Bit Pattern</div>
       <div className="flex flex-wrap gap-4 text-2xl font-mono justify-center">
-        <div className="flex flex-col items-center">
-          <div className="flex gap-1">
-            {bitArray.slice(0, g1).map((b, i) => (
-              <Bit key={`s-${i}`} bit={b} title="Sign" onClick={() => toggleBit(i)} />
-            ))}
+        {g1 > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="flex gap-1">
+              {bitArray.slice(0, g1).map((b, i) => (
+                <Bit key={`s-${i}`} bit={b} title="Sign" onClick={() => toggleBit(i)} />
+              ))}
+            </div>
+            <div className="text-xs text-zinc-500 mb-1">Sign</div>
           </div>
-          <div className="text-xs text-zinc-500 mb-1">Sign</div>
-        </div>
+        )}
         <div className="flex flex-col items-center">
           <div className="flex gap-1">
             {bitArray.slice(g1, g1 + g2).map((b, i) => (
@@ -45,4 +49,3 @@ export default function BitPattern({ bitArray, spec, toggleBit }) {
     </>
   );
 }
-

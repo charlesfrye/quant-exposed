@@ -187,7 +187,6 @@ export default function Home() {
             onDec={() => applyDecomposed({ significand: dec.significand - 1n })}
             onInc={() => applyDecomposed({ significand: dec.significand + 1n })}
           />
-
         </section>
 
         <LineBreak />
@@ -197,6 +196,14 @@ export default function Home() {
           <BaseNField label="Evaluation in Base-10" value={base10Text} />
           <BaseNField label="Exact Base-10 Value" value={exactText} />
         </section>
+
+        {/* <LineBreak /> */}
+
+        <footer className="mt-16 mb-6 text-center text-sm text-zinc-400">
+          Inspired by <a href="https://float.exposed" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">float.exposed</a>.{" "}
+          Read the <a href="https://github.com/opencomputeproject/HW-SIG-Microscaling-FP" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">OCP MX FP spec</a>.{" "}
+          Try <a href="https://modal.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">modal.com</a>.
+        </footer>
       </main>
     </div>
   );

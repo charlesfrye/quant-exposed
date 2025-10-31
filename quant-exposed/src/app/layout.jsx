@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Quant Exposed",
   description: "A tool for exploring the quantization of floating point numbers",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

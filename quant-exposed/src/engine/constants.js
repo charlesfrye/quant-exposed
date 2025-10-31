@@ -31,6 +31,7 @@ export const FORMATS = {
     exponentBias: 15,
     hasInfinity: true,
     hasNaN: true,
+    hasZeroes: true,
   },
   e8m0: {
     name: "E8 (E8M0)",
@@ -40,6 +41,7 @@ export const FORMATS = {
     exponentBias: 127,
     hasInfinity: false,
     hasNaN: true,
+    hasZeroes: false,
   },
   e2m3: {
     name: "FP6 (E2M3)",
@@ -49,6 +51,7 @@ export const FORMATS = {
     exponentBias: 1,
     hasInfinity: false,
     hasNaN: false,
+    hasZeroes: true,
   },
   e3m2: {
     name: "FP6 (E3M2)",
@@ -58,6 +61,7 @@ export const FORMATS = {
     exponentBias: 3,
     hasInfinity: false,
     hasNaN: false,
+    hasZeroes: true,
   },
   e2m1: {
     name: "FP4 (E2M1)",
@@ -67,5 +71,6 @@ export const FORMATS = {
     exponentBias: 1,
     hasInfinity: false,
     hasNaN: false,
+    hasZeroes: true,
   },
 };
