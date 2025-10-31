@@ -364,6 +364,12 @@ export function buildBase2Equation(spec, dec) {
   const isZero = expRaw === 0 && significand === 0n;
   const isSubnormal = expRaw === 0 && significand !== 0n;
 
+  // Special case: formats without zero support (e.g., e8m0) treat exponent=0, significand=0 as normal 2^-bias
+  const isE8M0Zero = isZero && (
+    (eBits === 8 && mBits === 0) || // e8m0 format
+    spec.formatInfo?.hasZeroes === false
+  );
+
   const bin = (v, width) => v.toString(2).padStart(width, '0');
   const sigBits = bin(Number(significand), mBits);
   const Ebits = bin(expRaw, eBits);
@@ -384,8 +390,14 @@ export function buildBase2Equation(spec, dec) {
   }
 
   // -------- Zeros ----------
-  if (isZero) {
+  if (isZero && !isE8M0Zero) {
     return `${signPow} × 0`;
+  }
+
+  // -------- e8m0 Zero (treated as normal) ----------
+  if (isE8M0Zero) {
+    // For e8m0 zero (exponent=0, significand=0), show as normal 2^-bias
+    return `${signPow} × 10_2^(${Ebits}_2 - ${Bbits}_2) × ${mBits ? `1.${sigBits}_2` : `1_2`}`;
   }
 
   // -------- Subnormals ----------
@@ -419,7 +431,13 @@ export function buildBase10Equation(spec, dec) {
   const isSubnormal = expRaw === 0;
   const signFactor = dec.sign ? -1 : 1;
 
-  if (isSubnormal) {
+  // Special case: formats without zero support (e.g., e8m0) treat exponent=0, significand=0 as normal 2^-bias
+  const isE8M0Zero = isSubnormal && dec.significand === 0n && (
+    (spec.exponentBits === 8 && spec.mantissaBits === 0) || // e8m0 format
+    spec.formatInfo?.hasZeroes === false
+  );
+
+  if (isSubnormal && !isE8M0Zero) {
     // For subnormals: 2^(1-bias) × (mantissa / 2^mBits)
     // Simplify to: 2^(1-bias-mBits) × mantissa
     // Or when mantissa is a power of 2, combine further
@@ -439,6 +457,12 @@ export function buildBase10Equation(spec, dec) {
 
     // Otherwise, show as: 2^combinedExp × mantissa
     return `${signFactor} × 2^${combinedExp} × ${significandNum}`;
+  }
+
+  if (isE8M0Zero) {
+    // For e8m0 zero (exponent=0, significand=0), show as 2^-bias (normal number)
+    const expAdj = expRaw - bias;
+    return `${signFactor} × 2^${expAdj}`;
   }
 
   // Normal numbers

@@ -26,7 +26,8 @@ import FormatSelector from "@/components/FormatSelector";
 import BitPattern from "@/components/BitPattern";
 
 export default function Home() {
-  const [formatKey, setFormatKey] = useState("e4m3");
+  const firstFormatKey = Object.keys(FORMATS)[0];
+  const [formatKey, setFormatKey] = useState(firstFormatKey);
   const spec = FORMATS[formatKey];
 
   const [bits, setBits] = useState(0n);

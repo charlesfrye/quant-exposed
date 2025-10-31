@@ -90,7 +90,6 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(15);
         expect(decomp.significand).toBe(6n);
         const value = bitsToValue(E4M3, maxBits);
-        expect(value).toBeCloseTo(448, 0);
         // Verify exact base 10 value: 2^8 × 1.75 = 256 × 1.75 = 448
         expect(value).toBe(448);
         expect(valueToBits(E4M3, 448)).toEqual(maxBits);
@@ -99,7 +98,6 @@ describe("ieee.js", () => {
         // Negative max normal: sign=1, exp=1111 (15), mant=110 (6) = 0b11111110 = 0xFE
         const maxBitsNeg = 0xFEn;
         const negValue = bitsToValue(E4M3, maxBitsNeg);
-        expect(negValue).toBeCloseTo(-448, 0);
         expect(negValue).toBe(-448);
         expect(valueToBits(E4M3, negValue)).toEqual(maxBitsNeg);
 
@@ -120,8 +118,6 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(1);
         expect(decomp.significand).toBe(0n);
         const value = bitsToValue(E4M3, minBits);
-        // 2^-6 = 1/64 = 0.015625
-        expect(value).toBeCloseTo(Math.pow(2, -6), 10);
         expect(value).toBe(0.015625);
         expect(valueToBits(E4M3, value)).toEqual(minBits);
         expect(composeBits(E4M3, decomp)).toEqual(minBits);
@@ -129,7 +125,6 @@ describe("ieee.js", () => {
         // Negative min normal: sign=1, exp=0001 (1), mant=000 (0) = 0b10001000 = 0x88
         const minBitsNeg = 0x88n;
         const negValue = bitsToValue(E4M3, minBitsNeg);
-        expect(negValue).toBeCloseTo(-Math.pow(2, -6), 10);
         expect(negValue).toBe(-0.015625);
 
         // Check the base-2 and 10 rendering for max normal value
@@ -149,8 +144,6 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(0);
         expect(decomp.significand).toBe(7n);
         const value = bitsToValue(E4M3, maxSubBits);
-        // 2^-6 × 0.875 = 0.015625 × 0.875 = 0.013671875
-        expect(value).toBeCloseTo(Math.pow(2, -6) * 0.875, 10);
         expect(value).toBe(0.013671875);
         expect(valueToBits(E4M3, value)).toEqual(maxSubBits);
         expect(composeBits(E4M3, decomp)).toEqual(maxSubBits);
@@ -158,7 +151,6 @@ describe("ieee.js", () => {
         // Negative max subnorm: sign=1, exp=0000 (0), mant=111 (7) = 0b10000111 = 0x87
         const maxSubBitsNeg = 0x87n;
         const negValue = bitsToValue(E4M3, maxSubBitsNeg);
-        expect(negValue).toBeCloseTo(-Math.pow(2, -6) * 0.875, 10);
         expect(negValue).toBe(-0.013671875);
 
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 0111_2) × 0.111_2");
@@ -176,8 +168,6 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(0);
         expect(decomp.significand).toBe(1n);
         const value = bitsToValue(E4M3, minSubBits);
-        // 2^-9 = 1/512 = 0.001953125
-        expect(value).toBeCloseTo(Math.pow(2, -9), 10);
         expect(value).toBe(0.001953125);
         expect(valueToBits(E4M3, 0.001953125)).toEqual(minSubBits);
         expect(composeBits(E4M3, decomp)).toEqual(minSubBits);
@@ -185,7 +175,6 @@ describe("ieee.js", () => {
         // Negative min subnorm: sign=1, exp=0000 (0), mant=001 (1) = 0b10000001 = 0x81
         const minSubBitsNeg = 0x81n;
         const negValue = bitsToValue(E4M3, minSubBitsNeg);
-        expect(negValue).toBeCloseTo(-Math.pow(2, -9), 10);
         expect(negValue).toBe(-0.001953125);
 
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 0111_2) × 0.001_2");
@@ -289,14 +278,11 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(30);
         expect(decomp.significand).toBe(3n);
         const value = bitsToValue(E5M2, maxBits);
-        // 2^15 × 1.75 = 32768 × 1.75 = 57344
-        expect(value).toBeCloseTo(57344, 0);
         expect(value).toBe(57344);
 
         // Negative max normal: sign=1, exp=11110 (30), mant=11 (3) = 0b11111011 = 0xFB
         const maxBitsNeg = 0xFBn;
         const negValue = bitsToValue(E5M2, maxBitsNeg);
-        expect(negValue).toBeCloseTo(-57344, 0);
         expect(negValue).toBe(-57344);
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(11110_2 - 01111_2) × 1.11_2");
@@ -312,14 +298,11 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(1);
         expect(decomp.significand).toBe(0n);
         const value = bitsToValue(E5M2, minBits);
-        // 2^-14 = 1/16384 = 0.00006103515625
-        expect(value).toBeCloseTo(Math.pow(2, -14), 15);
         expect(value).toBe(0.00006103515625);
 
         // Negative min normal: sign=1, exp=00001 (1), mant=00 (0) = 0b10000100 = 0x84
         const minBitsNeg = 0x84n;
         const negValue = bitsToValue(E5M2, minBitsNeg);
-        expect(negValue).toBeCloseTo(-Math.pow(2, -14), 15);
         expect(negValue).toBe(-0.00006103515625);
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(00001_2 - 01111_2) × 1.00_2");
@@ -335,8 +318,6 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(0);
         expect(decomp.significand).toBe(3n);
         const value = bitsToValue(E5M2, maxSubBits);
-        // 2^-14 × 0.75 = (1/16384) × 0.75 = 0.0000457763671875
-        expect(value).toBeCloseTo(Math.pow(2, -14) * 0.75, 15);
         expect(value).toBe(0.0000457763671875);
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111_2) × 0.11_2");
@@ -350,7 +331,6 @@ describe("ieee.js", () => {
         // Negative max subnorm: sign=1, exp=00000 (0), mant=11 (3) = 0b10000011 = 0x83
         const maxSubBitsNeg = 0x83n;
         const negValue = bitsToValue(E5M2, maxSubBitsNeg);
-        expect(negValue).toBeCloseTo(-Math.pow(2, -14) * 0.75, 15);
         expect(negValue).toBe(-0.0000457763671875);
       });
 
@@ -361,14 +341,11 @@ describe("ieee.js", () => {
         expect(decomp.exponent).toBe(0);
         expect(decomp.significand).toBe(1n);
         const value = bitsToValue(E5M2, minSubBits);
-        // 2^-16 = 1/65536 = 0.0000152587890625
-        expect(value).toBeCloseTo(Math.pow(2, -16), 15);
         expect(value).toBe(0.0000152587890625);
 
         // Negative min subnorm: sign=1, exp=00000 (0), mant=01 (1) = 0b10000001 = 0x81
         const minSubBitsNeg = 0x81n;
         const negValue = bitsToValue(E5M2, minSubBitsNeg);
-        expect(negValue).toBeCloseTo(-Math.pow(2, -16), 15);
         expect(negValue).toBe(-0.0000152587890625);
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111_2) × 0.01_2");
@@ -378,6 +355,153 @@ describe("ieee.js", () => {
         expect(bitsToRawHex(E5M2, minSubBits)).toBe("0x01");
         expect(bitsToRawDecimal(minSubBits)).toBe("1");
         expect(bitsToArray(E5M2, minSubBits)).toEqual([0, 0, 0, 0, 0, 0, 0, 1]);
+      });
+    });
+  });
+
+  describe("e2m3 format", () => {
+    const E2M3 = FORMATS.e2m3;
+
+    describe("E2M3 special cases", () => {
+      it("should have exponent bias of 3", () => {
+        expect(E2M3.exponentBias).toBe(1);
+      });
+
+      it("should not support infinity or NaN", () => {
+        expect(E2M3.hasInfinity).toBe(false);
+        expect(E2M3.hasNaN).toBe(false);
+      });
+      // TODO: Stopped here
+      it("should handle zeros: S 00 000₂", () => {
+        // Zero: sign=0, exp=00 (0), mant=000 (0) = 0b000000 = 0x00
+        const zeroBits = 0x00n;
+        const decomp = extract(E2M3, zeroBits);
+        expect(decomp.sign).toBe(0);
+        expect(decomp.exponent).toBe(0);
+        expect(decomp.significand).toBe(0n);
+        expect(bitsToValue(E2M3, zeroBits)).toBe(0);
+        expect(Object.is(bitsToValue(E2M3, zeroBits), 0)).toBe(true);
+
+        // Negative zero: sign=1, exp=00 (0), mant=000 (0) = 0b100000 = 0x20
+        const negZeroBits = 0x20n;
+        const negZeroDecomp = extract(E2M3, negZeroBits);
+        expect(negZeroDecomp.sign).toBe(1);
+        expect(negZeroDecomp.exponent).toBe(0);
+        expect(negZeroDecomp.significand).toBe(0n);
+        const negZeroValue = bitsToValue(E2M3, negZeroBits);
+        expect(negZeroValue === 0).toBe(true); // -0 === 0 is true
+        expect(Object.is(negZeroValue, -0)).toBe(true);
+
+        expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 0");
+        expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^-3 × 0");
+        expect(getExactBase10Value(E2M3, decomp, 0)).toBe("0");
+        expect(bitsToArray(E2M3, zeroBits)).toEqual([0, 0, 0, 0, 0, 0]);
+      });
+
+      it("should handle max normal: S 11 111₂ = ± 2^2 × 1.875 = ± 7.5", () => {
+        const maxBits = 0x1Fn;
+        const decomp = extract(E2M3, maxBits);
+        expect(decomp.exponent).toBe(3);
+        expect(decomp.significand).toBe(7n);
+        const value = bitsToValue(E2M3, maxBits);
+        expect(value).toBe(7.5);
+
+        expect(valueToBits(E2M3, value)).toEqual(maxBits);
+
+        expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(11_2 - 01_2) × 1.111_2");
+        expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^2 × 1.875");
+        expect(getExactBase10Value(E2M3, decomp, value)).toBe("7.5");
+        expect(bitsToArray(E2M3, maxBits)).toEqual([0, 1, 1, 1, 1, 1]);
+      });
+
+      it("should handle min normal: S 01 000₂ = ± 2^-0 = ± 1.0", () => {
+        const minBits = 0x08n;
+        const decomp = extract(E2M3, minBits);
+        expect(decomp.exponent).toBe(1);
+        expect(decomp.significand).toBe(0n);
+        const value = bitsToValue(E2M3, minBits);
+        expect(value).toBe(1.0);
+        expect(valueToBits(E2M3, value)).toEqual(minBits);
+        expect(composeBits(E2M3, decomp)).toEqual(minBits);
+
+        const minBitsNeg = 0x28n;
+        const negValue = bitsToValue(E2M3, minBitsNeg);
+        expect(negValue).toBe(-1.0);
+
+        expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(01_2 - 01_2) × 1.000_2");
+        expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^0 × 1");
+        expect(getExactBase10Value(E2M3, decomp, value)).toBe("1");
+        expect(bitsToArray(E2M3, minBits)).toEqual([0, 0, 1, 0, 0, 0]);
+      });
+
+      it("should handle max subnorm: S 00 111₂ = ± 2^-2 × 0.875", () => {
+        // Max subnorm: sign=0, exp=00 (0), mant=111 (7) = 0b00111 = 0x07
+        const maxSubBits = 0x07n;
+        const decomp = extract(E2M3, maxSubBits);
+        expect(decomp.exponent).toBe(0);
+        expect(decomp.significand).toBe(7n);
+        const value = bitsToValue(E2M3, maxSubBits);
+        expect(value).toBe(0.875);
+
+        expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 01_2) × 0.111_2");
+        expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^-3 × 7");
+        expect(getExactBase10Value(E2M3, decomp, value)).toBe("0.875");
+
+        expect(bitsToRawHex(E2M3, maxSubBits)).toBe("0x07");
+        expect(bitsToRawDecimal(maxSubBits)).toBe("7");
+        expect(bitsToArray(E2M3, maxSubBits)).toEqual([0, 0, 0, 1, 1, 1]);
+
+        // Negative max subnorm: sign=1, exp=00 (0), mant=111 (7) = 0b1000111 = 0x47
+        const maxSubBitsNeg = 0x27n;
+        const negValue = bitsToValue(E2M3, maxSubBitsNeg);
+        expect(negValue).toBe(-0.875);
+      });
+
+      it("should handle min subnorm: S 00 001₂ = ± 0.125", () => {
+        const minSubBits = 0x01n;
+        const decomp = extract(E2M3, minSubBits);
+        expect(decomp.exponent).toBe(0);
+        expect(decomp.significand).toBe(1n);
+        const value = bitsToValue(E2M3, minSubBits);
+        expect(value).toBe(0.125);
+
+        // Negative min subnorm: sign=1, exp=00 (0), mant=001 (1) = 0b1000001 = 0x41
+        const minSubBitsNeg = 0x21n;
+        const negValue = bitsToValue(E2M3, minSubBitsNeg);
+        expect(negValue).toBe(-0.125);
+
+        expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 01_2) × 0.001_2");
+        expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^-3");
+        expect(getExactBase10Value(E2M3, decomp, value)).toBe("0.125");
+
+        expect(bitsToRawHex(E2M3, minSubBits)).toBe("0x01");
+        expect(bitsToRawDecimal(minSubBits)).toBe("1");
+        expect(bitsToArray(E2M3, minSubBits)).toEqual([0, 0, 0, 0, 0, 1]);
+      });
+    });
+    describe("e8m0 format", () => {
+      const E8M0 = FORMATS.e8m0;
+
+      describe("E8M0 special cases", () => {
+        it("should handle zeros: S 00000000₂ = ± 2^-127", () => {
+          // For e8m0 with hasZeroes=false, zero encodes as the smallest normal
+
+          const zeroBits = 0x00n;
+          const decomp = extract(E8M0, zeroBits);
+          expect(decomp.sign).toBe(0);
+          expect(decomp.exponent).toBe(0);
+          expect(decomp.significand).toBe(0n);
+          const expectedValue = Math.pow(2, 0 - E8M0.exponentBias);
+          expect(bitsToValue(E8M0, zeroBits)).toBe(expectedValue);
+          expect(Object.is(bitsToValue(E8M0, zeroBits), expectedValue)).toBe(true);
+          expect(valueToBits(E8M0, expectedValue)).toEqual(zeroBits);
+          expect(composeBits(E8M0, decomp)).toEqual(zeroBits);
+
+          expect(bitsToRawHex(E8M0, zeroBits)).toBe("0x00");
+          expect(bitsToRawDecimal(zeroBits)).toBe("0");
+          expect(bitsToArray(E8M0, zeroBits)).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+        });
+
       });
     });
   });
