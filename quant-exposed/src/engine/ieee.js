@@ -139,9 +139,10 @@ export function valueToBits(spec, x) {
   const mBits = spec.mantissaBits;
   const eBits = spec.exponentBits;
   const maxExp = (1 << eBits) - 1;
-  // For formats without infinity/NaN, the maximum exponent is valid for normal numbers
-  // For formats with infinity/NaN, the maximum exponent is reserved for special values
-  const maxFiniteExp = (spec.hasInfinity || spec.hasNaN) ? maxExp - 1 : maxExp;
+  // For formats with infinity, the maximum exponent is reserved for special values
+  // For formats with NaN but not infinity, the maximum exponent is valid for normal numbers
+  // unless the mantissa would create a NaN pattern
+  const maxFiniteExp = spec.hasInfinity ? maxExp - 1 : maxExp;
 
   // Threshold for smallest normal: 2^(1-bias)
   const smallestNormal = Math.pow(2, 1 - bias);
@@ -176,10 +177,21 @@ export function valueToBits(spec, x) {
 
   let expRaw = exp + bias;
   if (expRaw >= maxExp) {
-    // Overflow to infinity if supported or clamp to max finite
+    // Overflow to infinity if supported
     if (spec.hasInfinity) {
       return composeBits(spec, { sign, exponent: maxExp, significand: 0n });
     }
+    // For formats with NaN but not infinity, check if this pattern would be NaN
+    if (expRaw === maxExp && spec.hasNaN) {
+      const testBits = composeBits(spec, { sign, exponent: maxExp, significand: BigInt(mantissa) });
+      if (spec.isNaN(Number(testBits))) {
+        // This pattern would be NaN, clamp to maxFiniteExp
+        return composeBits(spec, { sign, exponent: maxFiniteExp, significand: (1n << BigInt(mBits)) - 1n });
+      }
+      // This pattern is valid, use maxExp
+      return testBits;
+    }
+    // Clamp to max finite for other cases
     return composeBits(spec, { sign, exponent: maxFiniteExp, significand: (1n << BigInt(mBits)) - 1n });
   }
 
