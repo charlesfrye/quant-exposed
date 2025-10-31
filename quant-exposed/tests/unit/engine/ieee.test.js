@@ -44,9 +44,9 @@ describe("ieee.js", () => {
         expect(bitsToHexFloat(E4M3, nanBitsNeg)).toBe("nan");
         expect(bitsToArray(E4M3, nanBitsNeg)).toEqual([1, 1, 1, 1, 1, 1, 1, 1]);
 
-        expect(buildBase2Equation(E4M3, decomp)).toBe("Special (NaN/∞)");
-        expect(buildBase10Equation(E4M3, decomp)).toBe("Special (NaN/∞)");
-        expect(getExactBase10Value(E4M3, decomp, NaN)).toBe("NaN");
+        expect(buildBase2Equation(E4M3, decomp)).toBe("Not a Number");
+        expect(buildBase10Equation(E4M3, decomp)).toBe("Not a Number");
+        expect(getExactBase10Value(E4M3, decomp, NaN)).toBe("Not a Number");
 
         expect(bitsToRawHex(E4M3, nanBits)).toBe("0x7f");
         expect(bitsToRawDecimal(nanBits)).toBe("127");
@@ -229,9 +229,9 @@ describe("ieee.js", () => {
         expect(negValue).toBe(-Infinity);
         expect(bitsToHexFloat(E5M2, negInfBits)).toBe("-0xinf");
         expect(bitsToArray(E5M2, negInfBits)).toEqual([1, 1, 1, 1, 1, 1, 0, 0]);
-        expect(buildBase2Equation(E5M2, decomp)).toBe("Special (NaN/∞)");
-        expect(buildBase10Equation(E5M2, decomp)).toBe("Special (NaN/∞)");
-        expect(getExactBase10Value(E5M2, decomp, value)).toBe("Infinity");
+        expect(buildBase2Equation(E5M2, decomp)).toBe("∞");
+        expect(buildBase10Equation(E5M2, decomp)).toBe("∞");
+        expect(getExactBase10Value(E5M2, decomp, value)).toBe("∞");
       });
 
       it("should handle NaN patterns: S 11111 {01, 10, 11}₂", () => {
