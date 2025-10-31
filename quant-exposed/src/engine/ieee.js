@@ -60,8 +60,21 @@ export function bitsToHexFloat(spec, bits) {
   const { sign, exponent, significand } = extract(spec, bits);
   const bias = spec.exponentBias;
   const signPrefix = sign ? '-0x' : '0x';
-  if (exponent === (1 << spec.exponentBits) - 1) {
-    return 'nan';
+  const maxExp = (1 << spec.exponentBits) - 1;
+  // Only treat as NaN if the format supports NaN AND exponent is all ones
+  // For formats without special values, max exponent is valid for normal numbers
+  if ((spec.hasNaN || spec.hasInfinity) && exponent === maxExp) {
+    // Check if it's actually NaN (non-zero mantissa) or infinity (zero mantissa)
+    if (spec.hasNaN && significand !== 0n) {
+      return 'nan';
+    }
+    if (spec.hasInfinity && significand === 0n) {
+      return signPrefix + 'inf';
+    }
+    // If format supports NaN but this isn't the NaN pattern, still treat as NaN
+    if (spec.hasNaN) {
+      return 'nan';
+    }
   }
   if (exponent === 0) {
     const fracHex = fractionToHex(spec.mantissaBits, significand);
@@ -93,7 +106,9 @@ export function valueToBits(spec, x) {
     // Produce a NaN encoding if supported; otherwise return zero
     const allOnesExp = (1 << spec.exponentBits) - 1;
     if (spec.hasNaN) {
-      const nanSig = spec.mantissaBits > 0 ? 1n : 0n;
+      // For formats with explicit NaN patterns, set all mantissa bits to match the pattern
+      // Otherwise, use a non-zero mantissa value
+      const nanSig = spec.mantissaBits > 0 ? ((1n << BigInt(spec.mantissaBits)) - 1n) : 0n;
       return composeBits(spec, { sign: 0, exponent: allOnesExp, significand: nanSig });
     }
     return 0n;
@@ -124,7 +139,9 @@ export function valueToBits(spec, x) {
   const mBits = spec.mantissaBits;
   const eBits = spec.exponentBits;
   const maxExp = (1 << eBits) - 1;
-  const maxFiniteExp = maxExp - 1;
+  // For formats without infinity/NaN, the maximum exponent is valid for normal numbers
+  // For formats with infinity/NaN, the maximum exponent is reserved for special values
+  const maxFiniteExp = (spec.hasInfinity || spec.hasNaN) ? maxExp - 1 : maxExp;
 
   // Threshold for smallest normal: 2^(1-bias)
   const smallestNormal = Math.pow(2, 1 - bias);
@@ -191,12 +208,93 @@ export function maxValues(spec) {
   return { maxExponent: maxExp, maxSignificand: maxSig };
 }
 
+// d is a decomposed value { sign, exponent, significand }
+// Returns a decomposed value with the exponent and significand clamped to the range of the format
 export function clampDecomposed(spec, d) {
   const { maxExponent, maxSignificand } = maxValues(spec);
   const exponent = Math.max(0, Math.min(maxExponent, d.exponent));
   const significand = d.significand < 0n ? 0n : d.significand > maxSignificand ? maxSignificand : d.significand;
-  const sign = d.sign ? 1 : 0;
+  // Clamp sign to binary: > 0 becomes 1, <= 0 becomes 0
+  const sign = d.sign > 0 ? 1 : 0;
   return { sign, exponent, significand };
+}
+
+/**
+ * Check if a finite numeric value will overflow the format's representable range
+ * @param {Object} spec - Format specification
+ * @param {number} value - Finite numeric value to check
+ * @returns {boolean} True if the value will overflow
+ */
+export function checkOverflow(spec, value) {
+  if (!Number.isFinite(value)) return false;
+  const sign = value < 0 ? -1 : 1;
+  const ax = Math.abs(value);
+  const maxVal = spec.maxValue;
+  const minVal = spec.minValue;
+  return (sign > 0 && ax > maxVal) || (sign < 0 && -value < minVal);
+}
+
+/**
+ * Handle overflow for a finite numeric value by returning the appropriate value
+ * based on the format's capabilities (infinity, NaN, or clamped value)
+ * @param {Object} spec - Format specification
+ * @param {number} value - Finite numeric value that overflows
+ * @returns {Object} Object with `value` (the value to use) and optional `displayText`
+ */
+export function handleOverflow(spec, value) {
+  if (!Number.isFinite(value)) {
+    return { value };
+  }
+
+  const sign = value < 0 ? -1 : 1;
+  const maxVal = spec.maxValue;
+  const minVal = spec.minValue;
+
+  if (spec.hasInfinity) {
+    const overflowValue = sign > 0 ? Infinity : -Infinity;
+    const displayText = sign > 0 ? "Infinity" : "-Infinity";
+    return { value: overflowValue, displayText };
+  } else if (spec.hasNaN) {
+    return { value: NaN, displayText: "NaN" };
+  } else {
+    // Clamp to maximal value for this format
+    const clampedValue = sign > 0 ? maxVal : minVal;
+    const displayText = Number.isFinite(clampedValue)
+      ? formatFiniteWith20DigitRule(clampedValue)
+      : String(clampedValue);
+    return { value: clampedValue, displayText };
+  }
+}
+
+/**
+ * Normalize an input value, checking for overflow and handling it appropriately.
+ * For values that don't overflow but can't be exactly represented, returns the
+ * closest representable value to avoid bouncing.
+ * @param {Object} spec - Format specification
+ * @param {number} value - Numeric value to normalize
+ * @returns {Object} Object with `value` (the value to use) and optional `displayText`
+ */
+export function normalizeInputValue(spec, value) {
+  if (!Number.isFinite(value)) {
+    return { value };
+  }
+
+  if (checkOverflow(spec, value)) {
+    return handleOverflow(spec, value);
+  }
+
+  // Convert to bits and back to get the actual representable value
+  // This ensures we return the value that the bits will actually represent,
+  // preventing bouncing when the valueText updates based on the bits
+  const bits = valueToBits(spec, value);
+  const actualValue = bitsToValue(spec, bits);
+
+  // If the value changed after conversion, use the actual representable value
+  if (Math.abs(value - actualValue) > Number.EPSILON) {
+    return { value: actualValue };
+  }
+
+  return { value };
 }
 
 /* 
@@ -240,43 +338,100 @@ export function expandExponentialToPlain(expStr) {
   return sign + left + (right.length ? '.' + right : '');
 }
 
-
 export function buildBase2Equation(spec, dec) {
-  const eBits = spec.exponentBits;
-  const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  if (isSpecial) return 'Special (NaN/∞)';
+  const {
+    exponentBits: eBits,
+    mantissaBits: mBits,
+    exponentBias: bias,
+    hasInfinity,
+    hasNaN,
+  } = spec;
+  const { sign, exponent: expRaw, significand } = dec;
 
-  const mBits = spec.mantissaBits;
-  const bias = spec.exponentBias;
-  const isSubnormal = expRaw === 0;
+  const maxExp = (1 << eBits) - 1;
+  const isZero = expRaw === 0 && significand === 0n;
+  const isSubnormal = expRaw === 0 && significand !== 0n;
 
-  const fracBin = dec.significand
-    .toString(2)
-    .padStart(mBits, '0');
-  const base2Mantissa = isSubnormal ? `0.${fracBin}` : `1.${fracBin}`;
-  const expRawBin = expRaw.toString(2).padStart(eBits, '0');
-  const biasBin = bias.toString(2).padStart(eBits, '0');
+  const bin = (v, width) => v.toString(2).padStart(width, '0');
+  const sigBits = bin(Number(significand), mBits);
+  const Ebits = bin(expRaw, eBits);
+  const Bbits = bin(bias, eBits);
+  const signPow = `(-1)^${sign}`;
 
-  return `(-1)^${dec.sign} × 2^(${expRawBin}₂ - ${biasBin}₂) × ${base2Mantissa}₂`;
+  // -------- Special (NaN/∞) ----------
+  // Only treat as special if it's actually NaN or Infinity
+  // Check by reconstructing bits and using FormatDefinition's methods
+  if (expRaw === maxExp && (hasInfinity || hasNaN)) {
+    const bits = Number(composeBits(spec, dec));
+    if (hasInfinity && spec.isInfinity(bits)) {
+      return 'Special (NaN/∞)';
+    }
+    if (hasNaN && spec.isNaN(bits)) {
+      return 'Special (NaN/∞)';
+    }
+  }
+
+  // -------- Zeros ----------
+  if (isZero) {
+    return `${signPow} × 0`;
+  }
+
+  // -------- Subnormals ----------
+  if (isSubnormal) {
+    // exponent = 1 - bias; no hidden 1
+    return `${signPow} × 10_2^(1 - ${Bbits}_2) × ${mBits ? `0.${sigBits}_2` : `0_2`}`;
+  }
+
+  // -------- Normals ----------
+  return `${signPow} × 10_2^(${Ebits}_2 - ${Bbits}_2) × ${mBits ? `1.${sigBits}_2` : `1_2`}`;
 }
 
 export function buildBase10Equation(spec, dec) {
   const eBits = spec.exponentBits;
   const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
-  if (isSpecial) return 'Special (NaN/∞)';
+  const maxExp = (1 << eBits) - 1;
+  // Only treat as special if it's actually NaN or Infinity
+  // Check by reconstructing bits and using FormatDefinition's methods
+  if (expRaw === maxExp && (spec.hasInfinity || spec.hasNaN)) {
+    const bits = Number(composeBits(spec, dec));
+    if (spec.hasInfinity && spec.isInfinity(bits)) {
+      return 'Special (NaN/∞)';
+    }
+    if (spec.hasNaN && spec.isNaN(bits)) {
+      return 'Special (NaN/∞)';
+    }
+  }
 
   const bias = spec.exponentBias;
   const mBits = spec.mantissaBits;
   const isSubnormal = expRaw === 0;
   const signFactor = dec.sign ? -1 : 1;
 
-  const expAdj = isSubnormal ? 1 - bias : expRaw - bias;
-  const mantissaFloat = isSubnormal
-    ? Number(dec.significand) / Math.pow(2, mBits)
-    : 1 + Number(dec.significand) / Math.pow(2, mBits);
+  if (isSubnormal) {
+    // For subnormals: 2^(1-bias) × (mantissa / 2^mBits)
+    // Simplify to: 2^(1-bias-mBits) × mantissa
+    // Or when mantissa is a power of 2, combine further
+    const significandNum = Number(dec.significand);
+    const combinedExp = 1 - bias - mBits;
 
+    // Check if the mantissa fraction simplifies to a power of 2
+    // i.e., mantissa / 2^mBits = 2^k for some integer k
+    // This happens when mantissa itself is a power of 2
+    // For example: mantissa=1 means 1/8 = 2^-3, so we can combine to 2^(combinedExp-3)
+    const mantissaLog2 = Math.log2(significandNum);
+    if (Number.isInteger(mantissaLog2) && significandNum > 0) {
+      // Mantissa is a power of 2, so combine exponents
+      const finalExp = combinedExp + mantissaLog2;
+      return `${signFactor} × 2^${finalExp}`;
+    }
+
+    // Otherwise, show as: 2^combinedExp × mantissa
+    return `${signFactor} × 2^${combinedExp} × ${significandNum}`;
+  }
+
+  // Normal numbers
+  const expAdj = expRaw - bias;
+  const mantissaFloat = 1 + Number(dec.significand) / Math.pow(2, mBits);
   return `${signFactor} × 2^${expAdj} × ${mantissaFloat}`;
 }
 
@@ -284,10 +439,18 @@ export function buildBase10Equation(spec, dec) {
 export function getExactBase10Value(spec, dec, value) {
   const eBits = spec.exponentBits;
   const expRaw = dec.exponent;
-  const isSpecial = expRaw === (1 << eBits) - 1;
+  const maxExp = (1 << eBits) - 1;
+  // Only treat as special if it's actually NaN or Infinity
+  // Check by reconstructing bits and using FormatDefinition's methods
   const signFactor = dec.sign ? -1 : 1;
-  if (isSpecial) {
-    return Number.isNaN(value) ? 'NaN' : (signFactor < 0 ? '-Infinity' : 'Infinity');
+  if (expRaw === maxExp && (spec.hasInfinity || spec.hasNaN)) {
+    const bits = Number(composeBits(spec, dec));
+    if (spec.hasInfinity && spec.isInfinity(bits)) {
+      return signFactor < 0 ? '-Infinity' : 'Infinity';
+    }
+    if (spec.hasNaN && spec.isNaN(bits)) {
+      return 'NaN';
+    }
   }
   return Number.isFinite(value)
     ? formatFiniteWith20DigitRule(value)

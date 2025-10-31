@@ -16,13 +16,14 @@ import {
   getExactBase10Value,
   valueToBits,
   formatFiniteWith20DigitRule,
+  normalizeInputValue,
 } from "@/engine/ieee";
 
-import Bit from "@/components/Bit";
 import LineBreak from "@/components/LineBreak";
 import Field from "@/components/Field";
 import BaseNField from "@/components/BaseNField";
 import FormatSelector from "@/components/FormatSelector";
+import BitPattern from "@/components/BitPattern";
 
 export default function Home() {
   const [formatKey, setFormatKey] = useState("e4m3");
@@ -73,33 +74,21 @@ export default function Home() {
     }
     const parsed = Number(text);
     if (Number.isFinite(parsed)) {
-      // check for overflow based on format's representable range
-      let sign = parsed < 0 ? -1 : 1;
-      let ax = Math.abs(parsed);
-      let maxVal = spec.maxValue;
-      let minVal = spec.minValue;
-
-      let willOverflow = (sign > 0 && ax > maxVal) || (sign < 0 && -ax < minVal);
-
-      if (willOverflow) {
-        if (spec.hasInfinity) {
-          setValueText(sign > 0 ? "Infinity" : "-Infinity");
-          setBits(valueToBits(spec, sign > 0 ? Infinity : -Infinity));
-        } else if (spec.hasNaN) {
-          setValueText("NaN");
-          setBits(valueToBits(spec, NaN));
-        } else {
-          // Clamp to maximal value for this format
-          setValueText(
-            sign > 0
-              ? (Number.isFinite(maxVal) ? formatFiniteWith20DigitRule(maxVal) : String(maxVal))
-              : (Number.isFinite(minVal) ? formatFiniteWith20DigitRule(minVal) : String(minVal))
-          );
-          setBits(valueToBits(spec, sign > 0 ? maxVal : minVal));
-        }
-      } else {
-        setBits(valueToBits(spec, parsed));
+      const { value: normalizedValue, displayText } = normalizeInputValue(spec, parsed);
+      setBits(valueToBits(spec, normalizedValue));
+      // Only set displayText if provided (for overflow cases).
+      // Otherwise, let useEffect handle it based on the actual bits value
+      // to avoid bouncing when the value can't be exactly represented.
+      if (displayText !== undefined) {
+        setValueText(displayText);
       }
+      // For non-overflow cases, useEffect will update valueText from the bits
+    } else if (parsed === Infinity) {
+      setValueText("Infinity");
+      setBits(valueToBits(spec, Infinity));
+    } else if (parsed === -Infinity) {
+      setValueText("-Infinity");
+      setBits(valueToBits(spec, -Infinity));
     } else {
       // Revert display to current computed value
       setValueText(
@@ -133,15 +122,9 @@ export default function Home() {
     setFormatKey(next);
   }
 
-  const groups = useMemo(() => {
-    return [1, spec.exponentBits, spec.mantissaBits];
-  }, [spec]);
-
-  const [g1, g2, g3] = groups;
-
   return (
     <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans overflow-x-hidden">
-      <main className="flex w-full max-w-4xl flex-col gap-8 p-10">
+      <main className="flex w-full max-w-4xl flex-col gap-8 p-8">
         <FormatSelector
           formats={FORMATS}
           selectedFormat={formatKey}
@@ -151,53 +134,18 @@ export default function Home() {
         <section className="flex flex-col items-center w-full">
           <div className="text-zinc-500 mb-2 text-center">Value</div>
           <input
-            className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none w-full max-w-full h-12"
+            className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none w-full max-w-full h-16"
             value={valueText}
             onChange={handleValueChange}
             onBlur={commitValue}
             onKeyDown={(e) => { if (e.key === 'Enter') { commitValue(); } }}
           />
         </section>
+
         <LineBreak />
+
         <section className="flex flex-col items-center">
-          <div className="text-zinc-500 mb-2 text-center">Bit Pattern</div>
-          <div className="flex flex-wrap gap-4 text-2xl font-mono justify-center">
-            <div className="flex flex-col items-center">
-
-              <div className="flex gap-1">
-                {bitArray.slice(0, g1).map((b, i) => (
-                  <Bit key={`s-${i}`} bit={b} title="Sign" onClick={() => toggleBit(i)} />
-                ))}
-              </div>
-              <div className="text-xs text-zinc-500 mb-1">Sign</div>
-            </div>
-            <div className="flex flex-col items-center">
-
-              <div className="flex gap-1">
-                {bitArray.slice(g1, g1 + g2).map((b, i) => (
-                  <Bit key={`e-${i}`} bit={b} title="Exponent" onClick={() => toggleBit(g1 + i)} />
-                ))}
-              </div>
-              <div className="text-xs text-zinc-500 mb-1">Exponent</div>
-            </div>
-            {g3 > 0 && (
-              <div className="flex flex-col items-center">
-                <div className="flex gap-1">
-                  {bitArray
-                    .slice(g1 + g2, g1 + g2 + g3)
-                    .map((b, i) => (
-                      <Bit
-                        key={`m-${i}`}
-                        bit={b}
-                        title="Significand"
-                        onClick={() => toggleBit(g1 + g2 + i)}
-                      />
-                    ))}
-                </div>
-                <div className="text-xs text-zinc-500 mb-1">Significand</div>
-              </div>
-            )}
-          </div>
+          <BitPattern bitArray={bitArray} spec={spec} toggleBit={toggleBit} />
         </section>
 
         <LineBreak />
