@@ -26,7 +26,12 @@ import FormatSelector from "@/components/FormatSelector";
 import BitPattern from "@/components/BitPattern";
 
 export default function Home() {
-  const firstFormatKey = Object.keys(FORMATS)[0];
+  const filteredFormats = useMemo(() => {
+    return Object.fromEntries(
+      Object.entries(FORMATS).filter(([key]) => key !== 'bf16')
+    );
+  }, []);
+  const firstFormatKey = Object.keys(filteredFormats)[0];
   const [formatKey, setFormatKey] = useState(firstFormatKey);
   const spec = FORMATS[formatKey];
 
@@ -127,7 +132,7 @@ export default function Home() {
     <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans overflow-x-hidden">
       <main className="flex w-full max-w-4xl flex-col gap-8 p-8">
         <FormatSelector
-          formats={FORMATS}
+          formats={filteredFormats}
           selectedFormat={formatKey}
           onFormatChange={changeFormat}
         />
