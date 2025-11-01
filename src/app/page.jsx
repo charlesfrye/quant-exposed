@@ -26,6 +26,7 @@ import FormatSelector from "@/components/FormatSelector";
 import BitPattern from "@/components/BitPattern";
 
 export default function Home() {
+
   const firstFormatKey = Object.keys(FORMATS)[0];
   const [formatKey, setFormatKey] = useState(firstFormatKey);
   const spec = FORMATS[formatKey];
@@ -125,7 +126,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans overflow-x-hidden">
-      <main className="flex w-full max-w-4xl flex-col gap-8 p-8">
+      <main className="flex w-full max-w-4xl flex-col gap-4 sm:gap-8 p-4 sm:p-8">
         <FormatSelector
           formats={FORMATS}
           selectedFormat={formatKey}
@@ -133,7 +134,7 @@ export default function Home() {
         />
 
         <section className="flex flex-col items-center w-full">
-          <div className="text-zinc-500 mb-2 text-center">Value</div>
+          <div className="text-zinc-500 mb-1 sm:mb-2 text-center">Value</div>
           <input
             className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none w-full max-w-full h-16"
             value={valueText}
@@ -151,7 +152,7 @@ export default function Home() {
 
         <LineBreak />
 
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <Field
             label="Sign"
             value={dec.sign}
@@ -192,7 +193,7 @@ export default function Home() {
 
         <LineBreak />
 
-        <section className="flex flex-col items-center gap-6">
+        <section className="flex flex-col items-center gap-3 sm:gap-6">
           <BaseNField label="Evaluation in Base-2" value={base2Text} />
           <BaseNField label="Evaluation in Base-10" value={base10Text} />
           <BaseNField label="Exact Base-10 Value" value={exactText} />
@@ -200,7 +201,7 @@ export default function Home() {
 
         {/* <LineBreak /> */}
 
-        <footer className="mt-16 mb-6 text-center text-sm text-zinc-400">
+        <footer className="mt-8 sm:mt-16 mb-4 sm:mb-6 text-center text-sm text-zinc-400">
           Inspired by <a href="https://float.exposed" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">float.exposed</a>.{" "}
           Read the <a href="https://github.com/opencomputeproject/HW-SIG-Microscaling-FP" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">OCP MX FP spec</a>.{" "}
           Try <a href="https://modal.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">modal.com</a>.
