@@ -42,7 +42,7 @@ export default function Home() {
 
   const base2Text = useMemo(() => buildBase2Equation(spec, dec), [spec, dec]);
   const base10Text = useMemo(() => buildBase10Equation(spec, dec), [spec, dec]);
-  const exactText = useMemo(() => getExactBase10Value(spec, dec, value), [spec, dec, value]);
+  const exactText = useMemo(() => getExactBase10Value(spec, dec), [spec, dec]);
 
   const [valueText, setValueText] = useState("");
 

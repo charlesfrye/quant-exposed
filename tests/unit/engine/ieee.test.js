@@ -46,7 +46,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E4M3, decomp)).toBe("Special (NaN/∞)");
         expect(buildBase10Equation(E4M3, decomp)).toBe("Special (NaN/∞)");
-        expect(getExactBase10Value(E4M3, decomp, NaN)).toBe("NaN");
+        expect(getExactBase10Value(E4M3, decomp)).toBe("NaN");
 
         expect(bitsToRawHex(E4M3, nanBits)).toBe("0x7f");
         expect(bitsToRawDecimal(nanBits)).toBe("127");
@@ -76,7 +76,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 0");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-9 × 0");
-        expect(getExactBase10Value(E4M3, decomp, 0)).toBe("0");
+        expect(getExactBase10Value(E4M3, decomp)).toBe("0");
 
         expect(bitsToRawHex(E4M3, zeroBits)).toBe("0x00");
         expect(bitsToRawDecimal(zeroBits)).toBe("0");
@@ -104,7 +104,7 @@ describe("ieee.js", () => {
         // Check the base-2 and 10 rendering for max normal value
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1111_2 - 0111_2) × 1.110_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^8 × 1.75");
-        expect(getExactBase10Value(E4M3, decomp, value)).toBe("448");
+        expect(getExactBase10Value(E4M3, decomp)).toBe("448");
 
         expect(bitsToRawHex(E4M3, maxBits)).toBe("0x7e");
         expect(bitsToRawDecimal(maxBits)).toBe("126");
@@ -130,7 +130,7 @@ describe("ieee.js", () => {
         // Check the base-2 and 10 rendering for max normal value
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(0001_2 - 0111_2) × 1.000_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-6 × 1");
-        expect(getExactBase10Value(E4M3, decomp, value)).toBe("0.015625");
+        expect(getExactBase10Value(E4M3, decomp)).toBe("0.015625");
 
         expect(bitsToRawHex(E4M3, minBits)).toBe("0x08");
         expect(bitsToRawDecimal(minBits)).toBe("8");
@@ -155,7 +155,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 0111_2) × 0.111_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-9 × 7");
-        expect(getExactBase10Value(E4M3, decomp, value)).toBe("0.013671875");
+        expect(getExactBase10Value(E4M3, decomp)).toBe("0.013671875");
 
         expect(bitsToRawHex(E4M3, maxSubBits)).toBe("0x07");
         expect(bitsToRawDecimal(maxSubBits)).toBe("7");
@@ -179,7 +179,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E4M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 0111_2) × 0.001_2");
         expect(buildBase10Equation(E4M3, decomp)).toBe("1 × 2^-9");
-        expect(getExactBase10Value(E4M3, decomp, value)).toBe("0.001953125");
+        expect(getExactBase10Value(E4M3, decomp)).toBe("0.001953125");
 
         expect(bitsToRawHex(E4M3, minSubBits)).toBe("0x01");
         expect(bitsToRawDecimal(minSubBits)).toBe("1");
@@ -220,7 +220,7 @@ describe("ieee.js", () => {
         expect(bitsToArray(E5M2, negInfBits)).toEqual([1, 1, 1, 1, 1, 1, 0, 0]);
         expect(buildBase2Equation(E5M2, decomp)).toBe("Special (NaN/∞)");
         expect(buildBase10Equation(E5M2, decomp)).toBe("Special (NaN/∞)");
-        expect(getExactBase10Value(E5M2, decomp, value)).toBe("Infinity");
+        expect(getExactBase10Value(E5M2, decomp)).toBe("Infinity");
       });
 
       it("should handle NaN patterns: S 11111 {01, 10, 11}₂", () => {
@@ -267,7 +267,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 0");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-16 × 0");
-        expect(getExactBase10Value(E5M2, decomp, 0)).toBe("0");
+        expect(getExactBase10Value(E5M2, decomp)).toBe("0");
         expect(bitsToArray(E5M2, zeroBits)).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
       });
 
@@ -287,7 +287,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(11110_2 - 01111_2) × 1.11_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^15 × 1.75");
-        expect(getExactBase10Value(E5M2, decomp, value)).toBe("57344");
+        expect(getExactBase10Value(E5M2, decomp)).toBe("5.7344×104");
         expect(bitsToArray(E5M2, maxBits)).toEqual([0, 1, 1, 1, 1, 0, 1, 1]);
       });
 
@@ -307,7 +307,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(00001_2 - 01111_2) × 1.00_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-14 × 1");
-        expect(getExactBase10Value(E5M2, decomp, value)).toBe("0.00006103515625");
+        expect(getExactBase10Value(E5M2, decomp)).toBe("6.103515625×10-5");
         expect(bitsToArray(E5M2, minBits)).toEqual([0, 0, 0, 0, 0, 1, 0, 0]);
       });
 
@@ -322,7 +322,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111_2) × 0.11_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-16 × 3");
-        expect(getExactBase10Value(E5M2, decomp, value)).toBe("0.0000457763671875");
+        expect(getExactBase10Value(E5M2, decomp)).toBe("4.57763671875×10-5");
 
         expect(bitsToRawHex(E5M2, maxSubBits)).toBe("0x03");
         expect(bitsToRawDecimal(maxSubBits)).toBe("3");
@@ -350,7 +350,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E5M2, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111_2) × 0.01_2");
         expect(buildBase10Equation(E5M2, decomp)).toBe("1 × 2^-16");
-        expect(getExactBase10Value(E5M2, decomp, value)).toBe("0.0000152587890625");
+        expect(getExactBase10Value(E5M2, decomp)).toBe("1.52587890625×10-5");
 
         expect(bitsToRawHex(E5M2, minSubBits)).toBe("0x01");
         expect(bitsToRawDecimal(minSubBits)).toBe("1");
@@ -394,7 +394,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 0");
         expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^-3 × 0");
-        expect(getExactBase10Value(E2M3, decomp, 0)).toBe("0");
+        expect(getExactBase10Value(E2M3, decomp)).toBe("0");
         expect(bitsToArray(E2M3, zeroBits)).toEqual([0, 0, 0, 0, 0, 0]);
       });
 
@@ -410,7 +410,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(11_2 - 01_2) × 1.111_2");
         expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^2 × 1.875");
-        expect(getExactBase10Value(E2M3, decomp, value)).toBe("7.5");
+        expect(getExactBase10Value(E2M3, decomp)).toBe("7.5");
         expect(bitsToArray(E2M3, maxBits)).toEqual([0, 1, 1, 1, 1, 1]);
       });
 
@@ -430,7 +430,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(01_2 - 01_2) × 1.000_2");
         expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^0 × 1");
-        expect(getExactBase10Value(E2M3, decomp, value)).toBe("1");
+        expect(getExactBase10Value(E2M3, decomp)).toBe("1");
         expect(bitsToArray(E2M3, minBits)).toEqual([0, 0, 1, 0, 0, 0]);
       });
 
@@ -445,7 +445,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 01_2) × 0.111_2");
         expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^-3 × 7");
-        expect(getExactBase10Value(E2M3, decomp, value)).toBe("0.875");
+        expect(getExactBase10Value(E2M3, decomp)).toBe("0.875");
 
         expect(bitsToRawHex(E2M3, maxSubBits)).toBe("0x07");
         expect(bitsToRawDecimal(maxSubBits)).toBe("7");
@@ -472,7 +472,7 @@ describe("ieee.js", () => {
 
         expect(buildBase2Equation(E2M3, decomp)).toBe("(-1)^0 × 10_2^(1 - 01_2) × 0.001_2");
         expect(buildBase10Equation(E2M3, decomp)).toBe("1 × 2^-3");
-        expect(getExactBase10Value(E2M3, decomp, value)).toBe("0.125");
+        expect(getExactBase10Value(E2M3, decomp)).toBe("0.125");
 
         expect(bitsToRawHex(E2M3, minSubBits)).toBe("0x01");
         expect(bitsToRawDecimal(minSubBits)).toBe("1");
@@ -502,6 +502,45 @@ describe("ieee.js", () => {
           expect(bitsToArray(E8M0, zeroBits)).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
         });
 
+      });
+    });
+  });
+
+  describe("bfloat16 format", () => {
+    const BF16 = FORMATS.bf16;
+    describe("BF16 special cases", () => {
+      it("should handle zeros: S 0000000000000000₂ = ± 2^-127", () => {
+        const zeroBits = 0x0000n;
+        const decomp = extract(BF16, zeroBits);
+        expect(decomp.sign).toBe(0);
+        expect(decomp.exponent).toBe(0);
+        expect(decomp.significand).toBe(0n);
+        expect(bitsToValue(BF16, zeroBits)).toBe(0);
+        expect(Object.is(bitsToValue(BF16, zeroBits), 0)).toBe(true);
+        expect(valueToBits(BF16, 0)).toEqual(zeroBits);
+        expect(composeBits(BF16, decomp)).toEqual(zeroBits);
+
+        expect(bitsToRawHex(BF16, zeroBits)).toBe("0x0000");
+        expect(bitsToRawDecimal(zeroBits)).toBe("0");
+        expect(bitsToArray(BF16, zeroBits)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+      });
+      it("should handle min subnorm: S 0000000000000001₂ = ± 2^-127", () => {
+        const minSubBits = 0x0001n;
+        const decomp = extract(BF16, minSubBits);
+        expect(decomp.exponent).toBe(0);
+        expect(decomp.significand).toBe(1n);
+        const value = bitsToValue(BF16, minSubBits);
+        expect(value).toBe(9.18354961579912115600575419704879435795832466228193376178712270530013483949005603790283203125 * Math.pow(10, -41));
+        expect(valueToBits(BF16, value)).toEqual(minSubBits);
+        expect(composeBits(BF16, decomp)).toEqual(minSubBits);
+
+        expect(bitsToRawHex(BF16, minSubBits)).toBe("0x0001");
+        expect(bitsToRawDecimal(minSubBits)).toBe("1");
+        expect(bitsToArray(BF16, minSubBits)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+        // TODO: SUS -- Expected: "(-1)^0 × 10_2^(1 - 01111110_2) × 0.0000001_2"
+        expect(buildBase2Equation(BF16, decomp)).toBe("(-1)^0 × 10_2^(1 - 01111111_2) × 0.0000001_2");
+        expect(buildBase10Equation(BF16, decomp)).toBe("1 × 2^-126 × 0.0078125");
+        expect(getExactBase10Value(BF16, decomp)).toBe("9.18354961579912115600575419704879435795832466228193376178712270530013483949005603790283203125×10-41");
       });
     });
   });
