@@ -8,7 +8,7 @@ export default function BitPattern({ bitArray, spec, toggleBit }) {
 
   return (
     <>
-      <div className="text-zinc-500 mb-2 text-center">Bit Pattern</div>
+      <div className="text-zinc-500 mb-6 text-center">Bit Pattern</div>
       <div className="flex flex-wrap gap-4 text-2xl font-mono justify-center">
         {g1 > 0 && (
           <div className="flex flex-col items-center">

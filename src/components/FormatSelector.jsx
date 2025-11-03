@@ -1,17 +1,11 @@
 export default function FormatSelector({ formats, selectedFormat, onFormatChange }) {
-  // Extract short code from format name (e.g., "E4M3" from "FP8 (E4M3)")
-  const getShortCode = (name) => {
-    const match = name.match(/\(([^)]+)\)/);
-    return match ? match[1] : name;
-  };
 
   return (
     <section className="flex justify-center">
-      <div className="flex border border-zinc-700 rounded-lg overflow-hidden w-max">
+      <div className="flex border border-zinc-700 rounded-lg overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-500 scrollbar-track-transparent w-full max-w-full sm:w-max scroll-smooth snap-x">
         {Object.entries(formats).map(([k, s], index, array) => {
           const isLast = index === array.length - 1;
           const isSelected = k === selectedFormat;
-          const shortCode = getShortCode(s.name);
 
           return (
             <button
@@ -24,8 +18,7 @@ export default function FormatSelector({ formats, selectedFormat, onFormatChange
                 transition-colors
               `}
             >
-              <span className="sm:hidden">{shortCode}</span>
-              <span className="hidden sm:inline">{s.name}</span>
+              <span className="sm:inline">{s.name}</span>
             </button>
           );
         })}
@@ -33,4 +26,3 @@ export default function FormatSelector({ formats, selectedFormat, onFormatChange
     </section>
   );
 }
-
