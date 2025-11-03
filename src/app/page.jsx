@@ -27,11 +27,11 @@ import BitPattern from "@/components/BitPattern";
 
 export default function Home() {
 
-  const firstFormatKey = Object.keys(FORMATS)[0];
+  const firstFormatKey = Object.keys(FORMATS)[2]; // fp8 e4m3
   const [formatKey, setFormatKey] = useState(firstFormatKey);
   const spec = FORMATS[formatKey];
 
-  const [bits, setBits] = useState(0n);
+  const [bits, setBits] = useState(56n); // 1 in fp8 e4m3
 
   const dec = useMemo(() => extract(spec, bits), [spec, bits]);
   const bitArray = useMemo(() => bitsToArray(spec, bits), [spec, bits]);
@@ -125,7 +125,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans overflow-x-hidden">
+    <div className="flex min-h-screen items-start justify-center bg-zinc-50 font-sans">
       <main className="flex w-full max-w-4xl flex-col gap-4 sm:gap-8 p-4 sm:p-8">
         <FormatSelector
           formats={FORMATS}
@@ -134,7 +134,7 @@ export default function Home() {
         />
 
         <section className="flex flex-col items-center w-full">
-          <div className="text-zinc-500 mb-1 sm:mb-2 text-center">Value</div>
+          <div className="text-zinc-500 mb-1 text-center">Value</div>
           <input
             className="text-4xl sm:text-6xl font-semibold tracking-tight text-center bg-transparent outline-none w-full max-w-full h-16"
             value={valueText}
@@ -203,14 +203,10 @@ export default function Home() {
 
         <footer className="mt-8 sm:mt-16 mb-4 sm:mb-6 text-center text-sm text-zinc-400">
           Inspired by <a href="https://float.exposed" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">float.exposed</a>.{" "}
-          Read the <a href="https://github.com/opencomputeproject/HW-SIG-Microscaling-FP" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">OCP MX FP spec</a>.{" "}
-          Try <a href="https://modal.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">modal.com</a>.
+          Based on the <a href="https://github.com/opencomputeproject/HW-SIG-Microscaling-FP" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">OCP MX FP spec</a>.{" "}
+          Sponsored by <a href="https://modal.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">modal.com</a>.
         </footer>
       </main>
     </div>
   );
 }
-
-
-
-
